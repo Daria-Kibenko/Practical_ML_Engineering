@@ -5,6 +5,7 @@ from typing import Optional, TYPE_CHECKING
 
 from enums import TransactionType
 from models.user import User
+from models.wallet import Wallet
 
 if TYPE_CHECKING:
     from models.ml_task import MLTask
@@ -18,12 +19,12 @@ class Transaction(ABC):
         self,
         transaction_id: int,
         amount: float,
-        user: User,
+        wallet: Wallet,
         ml_task: Optional["MLTask"] = None,
     ) -> None:
         self._transaction_id: int = transaction_id
         self._amount: float = amount
-        self._user: User = user
+        self._wallet: Wallet = wallet
         self._ml_task: Optional["MLTask"] = ml_task
         self._created_at: datetime = datetime.now()
         self._transaction_type: TransactionType = self._get_type()
@@ -37,8 +38,15 @@ class Transaction(ABC):
         return self._amount
 
     @property
+    def wallet(self) -> Wallet:
+        return self._wallet
+
+    @property
     def user(self) -> User:
-        return self._user
+        """Для обратной совместимости - получаем пользователя из кошелька."""
+        raise NotImplementedError(
+            "Доступ к пользователю через транзакцию удалён. Используйте свойство .wallet"
+        )
 
     @property
     def ml_task(self) -> Optional["MLTask"]:
@@ -55,47 +63,47 @@ class Transaction(ABC):
     @abstractmethod
     def _get_type(self) -> TransactionType:
         """Вернуть тип транзакции (полиморфизм)."""
-        return 0
+        pass
 
     @abstractmethod
     def apply(self) -> None:
-        """Применить транзакцию к балансу."""
-        return 0
+        """Применить транзакцию к кошельку."""
+        pass
 
     def __repr__(self) -> str:
         return (
             f"{self.__class__.__name__}(id={self._transaction_id}, "
-            f"amount={self._amount}, user={self._user.username!r})"
+            f"amount={self._amount}, wallet_id={self._wallet.wallet_id})"
         )
 
 
 class DepositTransaction(Transaction):
-    """Пополнение баланса самим пользователем."""
+    """Пополнение баланса самим пользователем (через его кошелёк)."""
 
-    def __init__(self, transaction_id: int, amount: float, user: User) -> None:
-        super().__init__(transaction_id=transaction_id, amount=amount, user=user)
+    def __init__(self, transaction_id: int, amount: float, wallet: Wallet) -> None:
+        super().__init__(transaction_id=transaction_id, amount=amount, wallet=wallet)
 
     def _get_type(self) -> TransactionType:
         return TransactionType.DEPOSIT
 
     def apply(self) -> None:
-        self._user.deposit(self._amount)
+        self._wallet.deposit(self._amount)
 
 
 class DebitTransaction(Transaction):
-    """Списание кредитов за ML-запрос."""
+    """Списание кредитов за ML-запрос (из кошелька)."""
 
     def __init__(
         self,
         transaction_id: int,
         amount: float,
-        user: User,
+        wallet: Wallet,
         ml_task: "MLTask",
     ) -> None:
         super().__init__(
             transaction_id=transaction_id,
             amount=amount,
-            user=user,
+            wallet=wallet,
             ml_task=ml_task,
         )
 
@@ -103,27 +111,27 @@ class DebitTransaction(Transaction):
         return TransactionType.DEBIT
 
     def apply(self) -> None:
-        self._user.debit(self._amount)
+        self._wallet.debit(self._amount)
 
 
 class AdminDepositTransaction(Transaction):
-    """Пополнение баланса пользователя администратором."""
+    """Пополнение баланса пользователя администратором (через кошелёк пользователя)."""
 
     def __init__(
         self,
+        transaction_id: int,
         amount: float,
-        user: User,
+        wallet: Wallet,
         performed_by: "AdminUser",
-        transaction_id: int = 0,
     ) -> None:
         self._performed_by: "AdminUser" = performed_by
-        super().__init__(transaction_id=transaction_id, amount=amount, user=user)
+        super().__init__(transaction_id=transaction_id, amount=amount, wallet=wallet)
 
     def _get_type(self) -> TransactionType:
         return TransactionType.ADMIN_DEPOSIT
 
     def apply(self) -> None:
-        self._user.deposit(self._amount)
+        self._wallet.deposit(self._amount)
 
     @property
     def performed_by(self) -> "AdminUser":

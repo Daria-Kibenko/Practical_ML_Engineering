@@ -1,27 +1,30 @@
 from __future__ import annotations
 from enums import UserRole
+from models.wallet import Wallet
 
 
 class User:
     """
     Пользователь ML-сервиса.
-    Инкапсулирует данные авторизации и баланс.
+    Отвечает только за аутентификацию и роль.
+    Баланс вынесен в отдельную сущность Wallet.
     """
+
     def __init__(
         self,
         user_id: int,
         username: str,
         email: str,
         password_hash: str,
+        wallet: Wallet,
         role: UserRole = UserRole.USER,
-        balance: float = 0.0,
     ) -> None:
         self._user_id: int = user_id
         self._username: str = username
         self._email: str = email
         self._password_hash: str = password_hash
         self._role: UserRole = role
-        self._balance: float = balance
+        self._wallet: Wallet = wallet
 
     @property
     def user_id(self) -> int:
@@ -40,41 +43,24 @@ class User:
         return self._role
 
     @property
-    def balance(self) -> float:
-        return self._balance
+    def wallet(self) -> Wallet:
+        """Доступ к кошельку пользователя."""
+        return self._wallet
 
     def is_admin(self) -> bool:
         return self._role == UserRole.ADMIN
 
-    def deposit(self, amount: float) -> None:
-        """Пополнить баланс пользователя."""
-        if amount <= 0:
-            raise ValueError("Сумма пополнения должна быть положительной.")
-        self._balance += amount
-
-    def debit(self, amount: float) -> None:
-        """Списать средства с баланса."""
-        if amount <= 0:
-            raise ValueError("Сумма списания должна быть положительной.")
-        if self._balance < amount:
-            raise ValueError("Недостаточно средств на балансе.")
-        self._balance -= amount
-
-    def has_sufficient_balance(self, amount: float) -> bool:
-        """Проверить, достаточно ли средств."""
-        return self._balance >= amount
-
     def __repr__(self) -> str:
         return (
             f"User(id={self._user_id}, username={self._username!r}, "
-            f"role={self._role.value}, balance={self._balance})"
+            f"role={self._role.value}, wallet={self._wallet!r})"
         )
 
 
 class AdminUser(User):
     """
-    Администратор — расширяет базового пользователя (наследование).
-    Может пополнять баланс других пользователей и просматривать все транзакции.
+    Администратор — расширяет базового пользователя.
+    Может пополнять баланс других пользователей через их кошельки.
     """
 
     def __init__(
@@ -83,19 +69,24 @@ class AdminUser(User):
         username: str,
         email: str,
         password_hash: str,
+        wallet: Wallet,
     ) -> None:
         super().__init__(
             user_id=user_id,
             username=username,
             email=email,
             password_hash=password_hash,
+            wallet=wallet,
             role=UserRole.ADMIN,
         )
 
     def top_up_user(self, target_user: User, amount: float) -> "AdminDepositTransaction":
-        """Пополнить баланс указанного пользователя."""
+        """
+        Пополнить баланс указанного пользователя.
+        Работает через кошелек пользователя.
+        """
         from models.transaction import AdminDepositTransaction
-        target_user.deposit(amount)
+        target_user.wallet.deposit(amount)
         return AdminDepositTransaction(
             amount=amount,
             user=target_user,

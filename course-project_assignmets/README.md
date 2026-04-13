@@ -148,3 +148,14 @@ ml_service/
 **Наследование** — `AdminUser` расширяет `User`, добавляя права администратора. `ClassificationModel` и `RegressionModel` наследуют абстрактный `MLModel`. `DepositTransaction`, `DebitTransaction`, `AdminDepositTransaction` наследуют абстрактный `Transaction`.
 
 **Полиморфизм** — `MLModel.predict()` и `MLModel.validate()` объявлены абстрактными. `MLTask.run()` вызывает их не зная конкретного типа модели. Аналогично `Transaction.apply()` — поведение зависит от конкретного подкласса транзакции.
+
+## Добавленные файлы и их назначение
+
+| Файл | Назначение |
+|------|-------------|
+| `.env` | Переменные окружения (строка подключения `DATABASE_URL`). |
+| `database.py` | Настройка движка SQLAlchemy, создание сессий. |
+| `orm_models.py` | SQLAlchemy-модели (`UserORM`, `MLModelORM`, `MLTaskORM`, `PredictionResultORM`, `TransactionORM`) с типами и связями. |
+| `services/balance_service.py` | Реализация бизнес-операций: `create_user`, `deposit`, `deduct`, `make_prediction`, получение истории. |
+| `init_db.py` | Скрипт импотентной инициализации БД (создание таблиц, добавление demo-пользователя, admin, базовых моделей). |
+| `main.py` | Smoke-тест: проверка всех сценариев (создание пользователя, пополнение, списание, предсказание, недостаток средств, вывод истории). |

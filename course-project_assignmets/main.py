@@ -1,103 +1,60 @@
-import sys
-import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
+import sys, os
+sys.path.insert(0, os.path.dirname(__file__))
 
-from models import (
-    User, AdminUser,
-    ClassificationModel,
-    MLTask,
-    DebitTransaction,
+from database import SessionLocal
+from services.balance_service import (
+    create_user, deposit, deduct, make_prediction,
+    get_transaction_history, get_prediction_history, InsufficientBalanceError
 )
-from enums import TaskStatus
-from services import MLRequestHistory
+from init_db import init_database
+from orm_models import MLModelORM
+from enums.roles import UserRole
 
 
-def main() -> None:
-    # Создание пользователей
-    user = User(
-        user_id=1,
-        username="alice",
-        email="alice@example.com",
-        password_hash="hashed_password",
-    )
-    admin = AdminUser(
-        user_id=2,
-        username="admin",
-        email="admin@example.com",
-        password_hash="hashed_admin_password",
-    )
+def main():
+    init_database()
 
-    print("=== Начальное состояние ===")
-    print(user)
-
-    # Администратор пополняет баланс
-    admin.top_up_user(user, 100.0)
-    print(f"\n=== После пополнения администратором (+100) ===")
-    print(user)
-
-    # Создание ML-модель
-    model = ClassificationModel(
-        model_id=1,
-        name="SentimentClassifier",
-        description="Классификация тональности текста",
-        cost_per_prediction=10.0,
-    )
-    print(f"\n===ML-модель ===")
-    print(model)
-
-    # История запросов пользователя
-    history = MLRequestHistory(user)
-
-    # Создание и запуск задачи
-    task = MLTask(
-        task_id=101,
-        input_data={"text": "Отличный сервис!"},
-        user=user,
-        model=model,
-    )
-    result = task.run()
-    history.add_task(task)
-
-    debit_tx = DebitTransaction(
-        transaction_id=1,
-        amount=model.cost_per_prediction,
-        user=user,
-        ml_task=task,
-    )
-    history.add_transaction(debit_tx)
-
-    print(f"\n=== Выполнение задачи ===")
-    print(task)
-    print(f"Результат: {result}")
-    print(f"Баланс после запроса: {user.balance}")
-
-    # Нулевой баланс
-    user2 = User(
-        user_id=3, username="bob",
-        email="bob@example.com",
-        password_hash="hashed_bob",
-        balance=0.0,
-    )
-    task2 = MLTask(task_id=102, input_data={"text": "test"}, user=user2, model=model)
+    db = SessionLocal()
     try:
-        task2.run()
-    except ValueError as e:
-        print(f"\n=== Проверка баланса ===")
-        print(f"Ожидаемая ошибка: {e}")
+        # 1. Создание пользователя
+        user = create_user(db, "alice", "alice@example.com", initial_balance=0)
+        admin = create_user(db, "admin", "admin@example.com", initial_balance=1000, role=UserRole.ADMIN)
+        print(f"Создан {user.username}, баланс: {user.balance}")
 
-    # Невалидные данные
-    bad_task = MLTask(task_id=103, input_data=None, user=user, model=model)
-    bad_task.run()
-    print(f"\n=== Валидация входных данных ===")
-    print(f"Статус: {bad_task.status}")
-    print(f"Ошибки: {bad_task.validation_errors}")
+        # 2. Администратор пополняет баланс пользователя
+        deposit(db, user.id, 100.0, description="Пополнение от администратора")
+        db.refresh(user)
+        print(f"После пополнения: баланс = {user.balance}")
 
-    # История
-    print(f"\n=== История пользователя ===")
-    print(history)
-    print(f"Завершённых задач: {len(history.get_tasks(TaskStatus.COMPLETED))}")
-    print(f"Потрачено кредитов: {history.total_spent()}")
+        # 3. Загрузка ML-модели (демо-данные уже есть)
+        model = db.query(MLModelORM).filter(MLModelORM.name == "Классификация текста").first()
+        if not model:
+            print("Модель не найдена, запустите init_db.py")
+            return
 
+        # 4. Выполнение предсказания
+        task = make_prediction(db, user.id, model.id, '{"text": "Отличный сервис!"}')
+        db.refresh(user)
+        print(f"Задача выполнена, списано {task.credits_used} кредитов. Баланс: {user.balance}")
+
+        # 5. Проверка недостатка средств
+        try:
+            deduct(db, user.id, 1000, "Попытка списать много")
+        except InsufficientBalanceError as e:
+            print(f"Ожидаемая ошибка: {e}")
+
+        # 6. История транзакций
+        print("\n=== История транзакций ===")
+        for tx in get_transaction_history(db, user.id):
+            print(f"{tx.timestamp} | {tx.type.value} | {tx.amount} | {tx.description}")
+
+        # 7. История предсказаний
+        print("\n=== История предсказаний ===")
+        for t in get_prediction_history(db, user.id):
+            print(f"{t.created_at} | модель {t.model_id} | кредитов: {t.credits_used} | статус: {t.status.value}")
+
+    finally:
+        db.close()
 
 if __name__ == "__main__":
     main()
