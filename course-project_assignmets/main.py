@@ -1,4 +1,6 @@
-import sys, os
+import os
+import sys
+
 sys.path.insert(0, os.path.dirname(__file__))
 
 from database import SessionLocal
@@ -55,6 +57,7 @@ def main():
 
     finally:
         db.close()
+
 
 if __name__ == "__main__":
     main()
