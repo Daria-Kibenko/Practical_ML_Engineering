@@ -1,0 +1,106 @@
+version: "3.9"
+
+services:
+
+  # 1. Backend-приложение FastAPI
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    env_file:
+      - ./app/.env
+    volumes:
+      - ./app/src:/app/src
+    depends_on:
+      database:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    expose:
+      - "8000"
+    restart: unless-stopped
+
+  # 2. Reverse-proxy (Nginx)
+  web-proxy:
+    build:
+      context: ./web-proxy
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - app
+    restart: unless-stopped
+
+  # 3. Брокер сообщений (RabbitMQ)
+  #    restart: on-failure — перезапускать только при сбое, не при docker stop
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      # Named volume — данные очередей переживают docker compose down
+      - rabbitmq_data:/var/lib/rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: on-failure   # только при сбое, не при штатной остановке
+
+  # 4. База данных PostgreSQL
+  #    Named volume (не bind mount) — данные хранятся в Docker volume,
+  #    не зависят от структуры файловой системы хоста.
+  database:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ml_service
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      # Named volume — НЕ bind mount. Данные сохраняются при удалении контейнера.
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ml_service"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # 5. ML-воркер (Consumer RabbitMQ)
+  #    Масштабирование: docker compose up --scale worker=3
+  worker:
+    build:
+      context: ./worker
+      dockerfile: Dockerfile
+    volumes:
+      - ./app/src:/app/src   # воркер использует общие ORM-модели из app
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: guest
+      RABBITMQ_PASSWORD: guest
+      RABBITMQ_QUEUE: ml_tasks
+      DB_HOST: database
+      DB_PORT: 5432
+      DB_NAME: ml_service
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+    depends_on:
+      database:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    deploy:
+      replicas: 2
+    restart: on-failure   # ← воркер тоже перезапускается только при сбое
+
+# Именованные тома (named volumes)
+# Управляются Docker-ом, не зависят от пути на хосте.
+volumes:
+  postgres_data:    # данные PostgreSQL
+  rabbitmq_data:    # данные очередей RabbitMQ
