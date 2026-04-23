@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ML Service — Личный кабинет</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d1117;
+  --bg2: #161b22;
+  --bg3: #21262d;
+  --border: #30363d;
+  --text: #e6edf3;
+  --text2: #8b949e;
+  --text3: #484f58;
+  --accent: #f0a500;
+  --accent2: #e08e00;
+  --green: #3fb950;
+  --red: #f85149;
+  --blue: #58a6ff;
+  --purple: #bc8cff;
+  --radius: 8px;
+  --sidebar: 220px;
+  --font: 'DM Sans', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; }
+
+/ LANDING
+#landing {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.land-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 3rem;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: rgba(13,17,23,.95);
+  backdrop-filter: blur(8px);
+  z-index: 10;
+}
+.logo { font-family: var(--mono); font-size: 1rem; font-weight: 500; color: var(--accent); letter-spacing: .05em; }
+.land-nav-btns { display: flex; gap: .75rem; }
+
+.land-hero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 5rem 2rem 4rem;
+  position: relative;
+  overflow: hidden;
+}
+.land-hero::before {
+  content: '';
+  position: absolute;
+  top: -120px; left: 50%;
+  transform: translateX(-50%);
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(240,165,0,.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-tag {
+  font-family: var(--mono);
+  font-size: .75rem;
+  color: var(--accent);
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+  padding: .3rem .8rem;
+  border: 1px solid rgba(240,165,0,.3);
+  border-radius: 99px;
+}
+.hero-title {
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-weight: 300;
+  line-height: 1.1;
+  letter-spacing: -.02em;
+  margin-bottom: 1.5rem;
+  max-width: 800px;
+}
+.hero-title strong { font-weight: 600; color: var(--accent); }
+.hero-sub {
+  font-size: 1.15rem;
+  color: var(--text2);
+  max-width: 540px;
+  line-height: 1.7;
+  margin-bottom: 2.5rem;
+}
+.hero-btns { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
+
+.land-features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border-top: 1px solid var(--border);
+}
+.feature {
+  background: var(--bg);
+  padding: 2rem 2.5rem;
+  transition: background .2s;
+}
+.feature:hover { background: var(--bg2); }
+.feat-icon { font-size: 1.5rem; margin-bottom: 1rem; }
+.feat-title { font-weight: 500; margin-bottom: .5rem; }
+.feat-desc { font-size: .9rem; color: var(--text2); line-height: 1.6; }
+
+/ APP SHELL
+#app {
+  display: none;
+  min-height: 100vh;
+}
+#app.visible { display: flex; }
+
+.sidebar {
+  width: var(--sidebar);
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 5;
+}
+.sidebar-logo {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: .875rem;
+  color: var(--accent);
+  font-weight: 500;
+}
+.sidebar-nav { flex: 1; padding: .75rem 0; overflow-y: auto; }
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .6rem 1.5rem;
+  font-size: .875rem;
+  color: var(--text2);
+  cursor: pointer;
+  transition: color .15s, background .15s;
+  border-radius: 0;
+  white-space: nowrap;
+}
+.nav-item:hover { color: var(--text); background: rgba(255,255,255,.04); }
+.nav-item.active { color: var(--text); background: rgba(240,165,0,.1); border-right: 2px solid var(--accent); }
+.nav-icon { font-size: 1rem; width: 1.25rem; text-align: center; flex-shrink: 0; }
+.nav-sep { height: 1px; background: var(--border); margin: .5rem 1.5rem; }
+.sidebar-user {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border);
+  font-size: .8rem;
+}
+.user-email { color: var(--text2); margin-bottom: .25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.user-balance { font-family: var(--mono); color: var(--accent); font-size: .95rem; font-weight: 500; }
+.user-role { display: inline-block; font-size: .65rem; padding: .2rem .5rem; border-radius: 99px; margin-top: .35rem; font-family: var(--mono); text-transform: uppercase; letter-spacing: .05em; }
+.role-admin { background: rgba(188,140,255,.15); color: var(--purple); }
+.role-user { background: rgba(88,166,255,.1); color: var(--blue); }
+
+.main {
+  margin-left: var(--sidebar);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+.topbar {
+  height: 56px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+  background: var(--bg);
+  position: sticky;
+  top: 0;
+  z-index: 4;
+}
+.page-title { font-size: .95rem; font-weight: 500; }
+.topbar-right { display: flex; gap: .75rem; align-items: center; }
+
+.content { padding: 2rem; flex: 1; }
+
+/ AUTH MODAL
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.7);
+  backdrop-filter: blur(4px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 420px;
+  padding: 2rem;
+  animation: slideUp .2s ease;
+}
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.modal-title { font-size: 1.25rem; font-weight: 500; margin-bottom: .5rem; }
+.modal-sub { font-size: .875rem; color: var(--text2); margin-bottom: 1.5rem; }
+.modal-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem; }
+.modal-tab {
+  padding: .6rem 1rem;
+  font-size: .875rem;
+  color: var(--text2);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color .15s;
+}
+.modal-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.modal-close {
+  position: absolute;
+  top: 1rem; right: 1rem;
+  background: none;
+  border: none;
+  color: var(--text2);
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: .25rem;
+}
+
+/ FORMS
+.form-group { margin-bottom: 1rem; }
+label { display: block; font-size: .8rem; color: var(--text2); margin-bottom: .4rem; font-weight: 500; }
+input, select, textarea {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: .6rem .9rem;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: .9rem;
+  transition: border-color .15s;
+  outline: none;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+textarea { resize: vertical; min-height: 100px; font-family: var(--mono); font-size: .8rem; }
+
+/ BUTTONS
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .6rem 1.25rem;
+  border-radius: var(--radius);
+  font-family: var(--font);
+  font-size: .875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .15s;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn-primary { background: var(--accent); color: #000; border-color: var(--accent); }
+.btn-primary:hover:not(:disabled) { background: var(--accent2); }
+.btn-outline { background: transparent; color: var(--text); border-color: var(--border); }
+.btn-outline:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.btn-ghost { background: transparent; color: var(--text2); border-color: transparent; }
+.btn-ghost:hover { color: var(--text); background: rgba(255,255,255,.05); }
+.btn-danger { background: rgba(248,81,73,.15); color: var(--red); border-color: rgba(248,81,73,.3); }
+.btn-danger:hover { background: rgba(248,81,73,.25); }
+.btn-sm { padding: .35rem .8rem; font-size: .8rem; }
+.btn-full { width: 100%; justify-content: center; }
+.btn-lg { padding: .8rem 2rem; font-size: 1rem; }
+
+/ CARDS
+.card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.5rem;
+}
+.card-title { font-size: .8rem; color: var(--text2); font-weight: 500; text-transform: uppercase; letter-spacing: .08em; margin-bottom: .75rem; }
+.stat-value { font-family: var(--mono); font-size: 2rem; font-weight: 500; color: var(--text); }
+.stat-value.accent { color: var(--accent); }
+.stat-sub { font-size: .8rem; color: var(--text3); margin-top: .25rem; }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+
+/ ALERTS
+.alert {
+  padding: .75rem 1rem;
+  border-radius: var(--radius);
+  font-size: .875rem;
+  margin-bottom: 1rem;
+  display: none;
+}
+.alert.show { display: block; }
+.alert-error { background: rgba(248,81,73,.1); border: 1px solid rgba(248,81,73,.3); color: #ff8b85; }
+.alert-success { background: rgba(63,185,80,.1); border: 1px solid rgba(63,185,80,.3); color: #56d364; }
+.alert-warn { background: rgba(240,165,0,.1); border: 1px solid rgba(240,165,0,.3); color: var(--accent); }
+.alert-info { background: rgba(88,166,255,.1); border: 1px solid rgba(88,166,255,.3); color: #79c0ff; }
+
+/ TABLES
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: .875rem; }
+th { text-align: left; padding: .6rem 1rem; color: var(--text2); font-weight: 500; font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; border-bottom: 1px solid var(--border); }
+td { padding: .75rem 1rem; border-bottom: 1px solid rgba(48,54,61,.5); }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(255,255,255,.02); }
+
+/ BADGES
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: .2rem .6rem;
+  border-radius: 99px;
+  font-size: .7rem;
+  font-family: var(--mono);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+.badge-green { background: rgba(63,185,80,.15); color: var(--green); }
+.badge-red { background: rgba(248,81,73,.15); color: var(--red); }
+.badge-yellow { background: rgba(240,165,0,.15); color: var(--accent); }
+.badge-blue { background: rgba(88,166,255,.15); color: var(--blue); }
+.badge-gray { background: rgba(139,148,158,.15); color: var(--text2); }
+
+/ PREDICT FORM
+.predict-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+.features-editor { position: relative; }
+.features-hint { font-size: .75rem; color: var(--text3); margin-top: .4rem; font-family: var(--mono); }
+.validation-panel {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-top: 1rem;
+  display: none;
+}
+.validation-panel.show { display: block; }
+.val-header { display: flex; gap: 1rem; padding: .75rem 1rem; background: var(--bg3); border-bottom: 1px solid var(--border); font-size: .8rem; font-weight: 500; }
+.val-section { padding: .75rem 1rem; }
+.val-row { display: flex; align-items: center; gap: .5rem; padding: .3rem 0; font-size: .8rem; font-family: var(--mono); }
+.val-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+.result-card {
+  background: linear-gradient(135deg, rgba(240,165,0,.08), rgba(240,165,0,.02));
+  border: 1px solid rgba(240,165,0,.2);
+  border-radius: 10px;
+  padding: 1.5rem;
+  display: none;
+  animation: fadeIn .3s ease;
+}
+.result-card.show { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.result-prediction {
+  font-family: var(--mono);
+  font-size: 2.5rem;
+  font-weight: 500;
+  margin: .5rem 0;
+}
+.result-prediction.positive { color: var(--green); }
+.result-prediction.negative { color: var(--red); }
+.result-meta { display: flex; gap: 1.5rem; margin-top: 1rem; flex-wrap: wrap; }
+.result-meta-item { font-size: .8rem; }
+.result-meta-item span { display: block; color: var(--text2); font-size: .7rem; margin-bottom: .2rem; font-family: var(--mono); }
+
+/ DEPOSIT MODAL
+.amount-presets { display: flex; gap: .5rem; margin-bottom: .75rem; flex-wrap: wrap; }
+.preset-btn {
+  padding: .4rem .85rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  color: var(--text2);
+  font-size: .8rem;
+  font-family: var(--mono);
+  cursor: pointer;
+  transition: all .15s;
+}
+.preset-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/ LOADER
+.spinner {
+  display: inline-block;
+  width: 16px; height: 16px;
+  border: 2px solid rgba(255,255,255,.2);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin .6s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/ EMPTY STATE
+.empty {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--text3);
+}
+.empty-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+.empty-text { font-size: .9rem; }
+
+/ MISC
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
+.section-title { font-size: 1rem; font-weight: 500; }
+.mono { font-family: var(--mono); }
+.text2 { color: var(--text2); }
+.text3 { color: var(--text3); }
+.mb1 { margin-bottom: 1rem; }
+.mb2 { margin-bottom: 1.5rem; }
+.mt1 { margin-top: 1rem; }
+.flex { display: flex; align-items: center; }
+.gap { gap: .75rem; }
+.hidden { display: none !important; }
+hr.sep { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+
+/ MODEL SELECTOR
+.model-cards { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .75rem; margin-bottom: 1rem; }
+.model-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: .9rem 1rem;
+  cursor: pointer;
+  transition: all .15s;
+  background: var(--bg3);
+}
+.model-card:hover { border-color: rgba(240,165,0,.4); }
+.model-card.selected { border-color: var(--accent); background: rgba(240,165,0,.06); }
+.model-name { font-size: .875rem; font-weight: 500; margin-bottom: .25rem; }
+.model-cost { font-family: var(--mono); font-size: .75rem; color: var(--accent); }
+.model-desc { font-size: .75rem; color: var(--text2); margin-top: .4rem; line-height: 1.5; }
+
+/ ADMIN
+.admin-badge {
+  display: inline-flex; align-items: center; gap: .3rem;
+  font-size: .7rem; font-family: var(--mono); text-transform: uppercase;
+  padding: .15rem .6rem; border-radius: 99px;
+  background: rgba(188,140,255,.12); color: var(--purple);
+  letter-spacing: .06em;
+}
+
+@media (max-width: 768px) {
+  .predict-grid, .grid-2, .grid-3, .grid-4, .model-cards { grid-template-columns: 1fr; }
+  .sidebar { transform: translateX(-100%); }
+  .main { margin-left: 0; }
+  .land-nav { padding: 1rem 1.5rem; }
+  .content { padding: 1.25rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ─── LANDING ─── -->
+<div id="landing">
+  <nav class="land-nav">
+    <div class="logo">ml_service</div>
+    <div class="land-nav-btns">
+      <button class="btn btn-ghost" onclick="openAuth('login')">Войти</button>
+      <button class="btn btn-primary" onclick="openAuth('register')">Начать →</button>
+    </div>
+  </nav>
+
+  <section class="land-hero">
+    <div class="hero-tag">Machine Learning as a Service</div>
+    <h1 class="hero-title">
+      Умные предсказания<br><strong>без инфраструктуры</strong>
+    </h1>
+    <p class="hero-sub">
+      Отправляйте данные — получайте результаты. Кредитная система,
+      история операций, масштабирование через очереди сообщений.
+    </p>
+    <div class="hero-btns">
+      <button class="btn btn-primary btn-lg" onclick="openAuth('register')">Создать аккаунт</button>
+      <button class="btn btn-outline btn-lg" onclick="openAuth('login')">Войти в кабинет</button>
+    </div>
+  </section>
+
+  <div class="land-features">
+    <div class="feature">
+      <div class="feat-icon">⚡</div>
+      <div class="feat-title">Мгновенные предсказания</div>
+      <div class="feat-desc">Синхронный режим — результат сразу. Асинхронный — через очередь RabbitMQ с масштабированием.</div>
+    </div>
+    <div class="feature">
+      <div class="feat-icon">🔐</div>
+      <div class="feat-title">JWT-авторизация</div>
+      <div class="feat-desc">Защищённый доступ через токены. Роли пользователя и администратора.</div>
+    </div>
+    <div class="feature">
+      <div class="feat-icon">💳</div>
+      <div class="feat-title">Кредитный баланс</div>
+      <div class="feat-desc">Кредиты списываются при успешном предсказании. История всех операций доступна в кабинете.</div>
+    </div>
+    <div class="feature">
+      <div class="feat-icon">✅</div>
+      <div class="feat-title">Валидация данных</div>
+      <div class="feat-desc">Ошибочные поля возвращаются пользователю. Корректные — уходят на предсказание.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── AUTH MODAL ─── -->
+<div class="modal-overlay" id="authModal">
+  <div class="modal" style="position:relative">
+    <div class="modal-tabs">
+      <div class="modal-tab active" id="tabLogin" onclick="switchTab('login')">Войти</div>
+      <div class="modal-tab" id="tabRegister" onclick="switchTab('register')">Регистрация</div>
+    </div>
+
+    <div id="formLogin">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="loginEmail" placeholder="user@example.com">
+      </div>
+      <div class="form-group">
+        <label>Пароль</label>
+        <input type="password" id="loginPassword" placeholder="••••••••">
+      </div>
+      <div class="alert alert-error" id="loginError"></div>
+      <button class="btn btn-primary btn-full" onclick="doLogin()">
+        <span id="loginSpinner" class="spinner hidden"></span>
+        Войти
+      </button>
+      <p style="text-align:center;font-size:.8rem;color:var(--text3);margin-top:1rem">
+        Демо: user@example.com / password123
+      </p>
+    </div>
+
+    <div id="formRegister" class="hidden">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="regEmail" placeholder="your@email.com">
+      </div>
+      <div class="form-group">
+        <label>Пароль (минимум 6 символов)</label>
+        <input type="password" id="regPassword" placeholder="••••••••">
+      </div>
+      <div class="alert alert-error" id="regError"></div>
+      <div class="alert alert-success" id="regSuccess"></div>
+      <button class="btn btn-primary btn-full" onclick="doRegister()">
+        <span id="regSpinner" class="spinner hidden"></span>
+        Создать аккаунт
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── DEPOSIT MODAL ─── -->
+<div class="modal-overlay" id="depositModal">
+  <div class="modal" style="position:relative">
+    <div class="modal-title">Пополнить баланс</div>
+    <div class="modal-sub">Выберите сумму или введите вручную</div>
+    <div class="amount-presets">
+      <div class="preset-btn" onclick="setAmount(10)">10</div>
+      <div class="preset-btn" onclick="setAmount(25)">25</div>
+      <div class="preset-btn" onclick="setAmount(50)">50</div>
+      <div class="preset-btn" onclick="setAmount(100)">100</div>
+      <div class="preset-btn" onclick="setAmount(500)">500</div>
+    </div>
+    <div class="form-group">
+      <label>Сумма (кредитов)</label>
+      <input type="number" id="depositAmount" value="50" min="1">
+    </div>
+    <div class="alert alert-error" id="depositError"></div>
+    <div class="alert alert-success" id="depositSuccess"></div>
+    <div style="display:flex;gap:.75rem">
+      <button class="btn btn-outline" onclick="closeDeposit()">Отмена</button>
+      <button class="btn btn-primary" style="flex:1" onclick="doDeposit()">
+        <span id="depositSpinner" class="spinner hidden"></span>
+        Пополнить
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── APP SHELL ─── -->
+<div id="app">
+  <aside class="sidebar">
+    <div class="sidebar-logo">ml_service</div>
+    <nav class="sidebar-nav">
+      <div class="nav-item active" data-page="dashboard" onclick="showPage('dashboard')">
+        <span class="nav-icon">◈</span> Дашборд
+      </div>
+      <div class="nav-item" data-page="predict" onclick="showPage('predict')">
+        <span class="nav-icon">⟡</span> ML-предсказание
+      </div>
+      <div class="nav-item" data-page="history" onclick="showPage('history')">
+        <span class="nav-icon">≡</span> История
+      </div>
+      <div class="nav-sep"></div>
+      <div class="nav-item hidden" data-page="admin" id="adminNavItem" onclick="showPage('admin')">
+        <span class="nav-icon">◉</span> Администратор
+      </div>
+    </nav>
+    <div class="sidebar-user">
+      <div class="user-email" id="sideEmail">—</div>
+      <div class="user-balance" id="sideBalance">— кр.</div>
+      <div class="user-role" id="sideRole"></div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:.5rem;padding-left:0" onclick="doLogout()">Выйти</button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="page-title" id="pageTitle">Дашборд</div>
+      <div class="topbar-right">
+        <button class="btn btn-outline btn-sm" onclick="openDeposit()">+ Пополнить</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ─── DASHBOARD ─── -->
+      <div id="pageDashboard">
+        <div class="grid-4 mb2" id="statsGrid">
+          <div class="card">
+            <div class="card-title">Баланс</div>
+            <div class="stat-value accent" id="dashBalance">—</div>
+            <div class="stat-sub">кредитов</div>
+          </div>
+          <div class="card">
+            <div class="card-title">Всего задач</div>
+            <div class="stat-value" id="dashTotal">—</div>
+            <div class="stat-sub">ML-запросов</div>
+          </div>
+          <div class="card">
+            <div class="card-title">Успешных</div>
+            <div class="stat-value" id="dashCompleted" style="color:var(--green)">—</div>
+            <div class="stat-sub">завершено</div>
+          </div>
+          <div class="card">
+            <div class="card-title">Списано</div>
+            <div class="stat-value" id="dashSpent" style="color:var(--red)">—</div>
+            <div class="stat-sub">кредитов</div>
+          </div>
+        </div>
+
+        <div class="section-header">
+          <div class="section-title">Последние операции</div>
+          <button class="btn btn-ghost btn-sm" onclick="showPage('history')">Все →</button>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table id="dashTable">
+              <thead>
+                <tr>
+                  <th>Дата</th>
+                  <th>Модель</th>
+                  <th>Статус</th>
+                  <th>Кредиты</th>
+                </tr>
+              </thead>
+              <tbody id="dashTableBody">
+                <tr><td colspan="4"><div class="empty"><div class="empty-icon">◌</div><div class="empty-text">Нет данных</div></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── PREDICT ─── -->
+      <div id="pagePredict" class="hidden">
+        <div class="predict-grid">
+          <div>
+            <div class="section-header mb1">
+              <div class="section-title">Выберите модель</div>
+            </div>
+            <div class="model-cards" id="modelCards">
+              <div style="padding:1rem;color:var(--text3);font-size:.85rem">Загрузка моделей...</div>
+            </div>
+
+            <div class="form-group">
+              <label>Входные данные (JSON)</label>
+              <textarea id="featuresInput" placeholder='{"feature1": 1.5, "feature2": 3.0, "feature3": -0.8}'></textarea>
+              <div class="features-hint">Все значения должны быть числами. Нечисловые поля будут отклонены.</div>
+            </div>
+
+            <div class="alert alert-error" id="predictError"></div>
+            <div class="alert alert-warn" id="predictWarn"></div>
+
+            <div style="display:flex;gap:.75rem">
+              <button class="btn btn-primary" style="flex:1" onclick="doPredict(false)">
+                <span id="predictSpinner" class="spinner hidden"></span>
+                Предсказать
+              </button>
+              <button class="btn btn-outline" onclick="doPredict(true)" title="Асинхронно через RabbitMQ">
+                ⟳ Async
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <div class="section-title mb1">Результат</div>
+
+            <div class="validation-panel" id="validationPanel">
+              <div class="val-header">
+                <span>Валидация входных данных</span>
+              </div>
+              <div class="val-section" id="validOk"></div>
+              <div class="val-section" id="validErr" style="border-top:1px solid var(--border)"></div>
+            </div>
+
+            <div class="result-card" id="resultCard">
+              <div style="font-size:.75rem;color:var(--text2);font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em">Предсказание</div>
+              <div class="result-prediction" id="resultPrediction">—</div>
+              <div class="result-meta">
+                <div class="result-meta-item">
+                  <span>Модель</span>
+                  <span id="resultModel" class="mono">—</span>
+                </div>
+                <div class="result-meta-item">
+                  <span>Уверенность</span>
+                  <span id="resultConf" class="mono">—</span>
+                </div>
+                <div class="result-meta-item">
+                  <span>Списано</span>
+                  <span id="resultCharged" style="color:var(--red);font-family:var(--mono)">—</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="card mt1" id="asyncCard" style="display:none">
+              <div class="card-title">Асинхронная задача</div>
+              <div style="font-family:var(--mono);font-size:.9rem;margin-bottom:.75rem">
+                ID: <span id="asyncTaskId" style="color:var(--blue)">—</span>
+              </div>
+              <div style="font-size:.85rem;color:var(--text2);margin-bottom:.75rem">
+                Статус: <span id="asyncStatus" class="badge badge-yellow">pending</span>
+              </div>
+              <button class="btn btn-outline btn-sm" onclick="pollTask()">Проверить статус</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── HISTORY ─── -->
+      <div id="pageHistory" class="hidden">
+        <div style="display:flex;gap:1rem;margin-bottom:1.5rem">
+          <button class="btn btn-outline btn-sm active-tab" id="htabML" onclick="switchHistTab('ml')">ML-запросы</button>
+          <button class="btn btn-ghost btn-sm" id="htabTx" onclick="switchHistTab('tx')">Транзакции</button>
+        </div>
+
+        <div id="histML">
+          <div class="card">
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Дата</th><th>Модель</th><th>Статус</th><th>Кредиты</th><th>Результат</th></tr></thead>
+                <tbody id="histMLBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div id="histTx" class="hidden">
+          <div class="card">
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Дата</th><th>Тип</th><th>Сумма</th><th>Задача</th></tr></thead>
+                <tbody id="histTxBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── ADMIN ─── -->
+      <div id="pageAdmin" class="hidden">
+        <div class="flex gap mb2">
+          <div class="section-title">Панель администратора</div>
+          <span class="admin-badge">admin</span>
+        </div>
+
+        <div class="grid-2 mb2">
+          <div class="card">
+            <div class="card-title">Пополнить баланс пользователя</div>
+            <div class="form-group">
+              <label>ID пользователя</label>
+              <input type="number" id="adminUserId" placeholder="1">
+            </div>
+            <div class="form-group">
+              <label>Сумма (кредитов)</label>
+              <input type="number" id="adminAmount" value="100" min="1">
+            </div>
+            <div class="alert alert-error" id="adminDepositErr"></div>
+            <div class="alert alert-success" id="adminDepositOk"></div>
+            <button class="btn btn-primary btn-sm" onclick="doAdminDeposit()">Пополнить</button>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Инструменты</div>
+            <div style="font-size:.875rem;color:var(--text2);line-height:1.8">
+              <div>• Swagger UI: <a href="/docs" target="_blank" style="color:var(--blue)">/docs</a></div>
+              <div>• RabbitMQ UI: <a href="http://localhost:15672" target="_blank" style="color:var(--blue)">:15672</a></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-header mb1">
+          <div class="section-title">Все транзакции системы</div>
+          <button class="btn btn-outline btn-sm" onclick="loadAdminTx()">Обновить</button>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>ID</th><th>Пользователь</th><th>Тип</th><th>Сумма</th><th>Задача</th><th>Дата</th></tr></thead>
+              <tbody id="adminTxBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+// STATE
+const API = '';  // same origin — nginx proxies /api calls to FastAPI
+let token = localStorage.getItem('token');
+let currentUser = null;
+let models = [];
+let selectedModel = null;
+let pollInterval = null;
+
+// API HELPERS
+async function api(method, path, body) {
+  const opts = {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+  };
+  if (token) opts.headers['Authorization'] = 'Bearer ' + token;
+  if (body !== undefined) opts.body = JSON.stringify(body);
+  const r = await fetch(path, opts);
+  const data = await r.json();
+  if (!r.ok) throw { status: r.status, detail: data.detail || JSON.stringify(data) };
+  return data;
+}
+
+// INIT
+async function init() {
+  if (!token) return showLanding();
+  try {
+    currentUser = await api('GET', '/auth/me');
+    await showApp();
+  } catch {
+    localStorage.removeItem('token');
+    token = null;
+    showLanding();
+  }
+}
+
+function showLanding() {
+  document.getElementById('landing').style.display = 'flex';
+  document.getElementById('app').classList.remove('visible');
+}
+
+async function showApp() {
+  document.getElementById('landing').style.display = 'none';
+  document.getElementById('app').classList.add('visible');
+
+  // Update sidebar
+  document.getElementById('sideEmail').textContent = currentUser.email;
+  const roleEl = document.getElementById('sideRole');
+  roleEl.textContent = currentUser.role === 'admin' ? 'Administrator' : 'User';
+  roleEl.className = 'user-role ' + (currentUser.role === 'admin' ? 'role-admin' : 'role-user');
+
+  if (currentUser.role === 'admin') {
+    document.getElementById('adminNavItem').classList.remove('hidden');
+  }
+
+  await loadBalance();
+  await loadDashboard();
+  await loadModels();
+}
+
+// AUTH
+function openAuth(tab) {
+  document.getElementById('authModal').classList.add('open');
+  switchTab(tab);
+}
+
+function switchTab(tab) {
+  document.getElementById('formLogin').classList.toggle('hidden', tab !== 'login');
+  document.getElementById('formRegister').classList.toggle('hidden', tab !== 'register');
+  document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
+  document.getElementById('tabRegister').classList.toggle('active', tab !== 'login');
+  clearAlerts('loginError', 'regError', 'regSuccess');
+}
+
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const errEl = document.getElementById('loginError');
+  const spinner = document.getElementById('loginSpinner');
+  errEl.classList.remove('show');
+  spinner.classList.remove('hidden');
+  try {
+    const data = await api('POST', '/auth/login', { email, password });
+    token = data.access_token;
+    localStorage.setItem('token', token);
+    currentUser = await api('GET', '/auth/me');
+    document.getElementById('authModal').classList.remove('open');
+    await showApp();
+    showPage('dashboard');
+  } catch(e) {
+    showAlert(errEl, e.detail || 'Ошибка входа');
+  } finally {
+    spinner.classList.add('hidden');
+  }
+}
+
+async function doRegister() {
+  const email = document.getElementById('regEmail').value.trim();
+  const password = document.getElementById('regPassword').value;
+  const errEl = document.getElementById('regError');
+  const okEl = document.getElementById('regSuccess');
+  const spinner = document.getElementById('regSpinner');
+  errEl.classList.remove('show'); okEl.classList.remove('show');
+  spinner.classList.remove('hidden');
+  try {
+    await api('POST', '/auth/register', { email, password });
+    showAlert(okEl, 'Аккаунт создан! Войдите с вашими данными.');
+    setTimeout(() => switchTab('login'), 1500);
+  } catch(e) {
+    showAlert(errEl, e.detail || 'Ошибка регистрации');
+  } finally {
+    spinner.classList.add('hidden');
+  }
+}
+
+function doLogout() {
+  localStorage.removeItem('token');
+  token = null;
+  currentUser = null;
+  document.getElementById('adminNavItem').classList.add('hidden');
+  showLanding();
+}
+
+// BALANCE
+async function loadBalance() {
+  try {
+    const b = await api('GET', '/balance/');
+    const val = b.amount.toFixed(1);
+    document.getElementById('sideBalance').textContent = val + ' кр.';
+    document.getElementById('dashBalance').textContent = val;
+  } catch {}
+}
+
+function openDeposit() {
+  document.getElementById('depositModal').classList.add('open');
+  clearAlerts('depositError', 'depositSuccess');
+}
+
+function closeDeposit() {
+  document.getElementById('depositModal').classList.remove('open');
+}
+
+function setAmount(n) {
+  document.getElementById('depositAmount').value = n;
+}
+
+async function doDeposit() {
+  const amount = parseFloat(document.getElementById('depositAmount').value);
+  const errEl = document.getElementById('depositError');
+  const okEl = document.getElementById('depositSuccess');
+  const spinner = document.getElementById('depositSpinner');
+  clearAlerts('depositError', 'depositSuccess');
+  if (!amount || amount <= 0) { showAlert(errEl, 'Введите корректную сумму'); return; }
+  spinner.classList.remove('hidden');
+  try {
+    const r = await api('POST', '/balance/deposit', { amount });
+    showAlert(okEl, `Баланс пополнен! Теперь: ${r.amount.toFixed(1)} кр.`);
+    await loadBalance();
+    setTimeout(closeDeposit, 1500);
+  } catch(e) {
+    showAlert(errEl, e.detail || 'Ошибка пополнения');
+  } finally {
+    spinner.classList.add('hidden');
+  }
+}
+
+// DASHBOARD
+async function loadDashboard() {
+  try {
+    const tasks = await api('GET', '/history/ml-requests?limit=5');
+    const txs = await api('GET', '/history/transactions?limit=50');
+
+    document.getElementById('dashTotal').textContent = tasks.length;
+    const completed = tasks.filter(t => t.status === 'completed').length;
+    document.getElementById('dashCompleted').textContent = completed;
+    const spent = txs.filter(t => t.type === 'debit').reduce((s, t) => s + t.amount, 0);
+    document.getElementById('dashSpent').textContent = spent.toFixed(1);
+
+    const tbody = document.getElementById('dashTableBody');
+    if (!tasks.length) {
+      tbody.innerHTML = '<tr><td colspan="4"><div class="empty"><div class="empty-icon">◌</div><div class="empty-text">Нет ML-запросов</div></div></td></tr>';
+    } else {
+      tbody.innerHTML = tasks.map(t => `
+        <tr>
+          <td class="mono text2" style="font-size:.75rem">${fmtDate(t.created_at)}</td>
+          <td>${t.model_name}</td>
+          <td>${statusBadge(t.status)}</td>
+          <td class="mono">${t.credits_charged != null ? '-' + t.credits_charged.toFixed(1) : '—'}</td>
+        </tr>`).join('');
+    }
+  } catch {}
+}
+
+// MODELS
+async function loadModels() {
+  try {
+    models = await api('GET', '/predict/models');
+    renderModelCards();
+  } catch {}
+}
+
+function renderModelCards() {
+  const el = document.getElementById('modelCards');
+  if (!models.length) { el.innerHTML = '<div style="color:var(--text3);font-size:.85rem;padding:.5rem">Нет доступных моделей</div>'; return; }
+  el.innerHTML = models.map(m => `
+    <div class="model-card ${selectedModel === m.id ? 'selected' : ''}" onclick="selectModel(${m.id})">
+      <div class="model-name">${m.name}</div>
+      <div class="model-cost">${m.cost_per_prediction} кр.</div>
+      <div class="model-desc">${m.description}</div>
+    </div>`).join('');
+  if (!selectedModel && models.length) selectModel(models[0].id);
+}
+
+function selectModel(id) {
+  selectedModel = id;
+  renderModelCards();
+}
+
+// PREDICT
+async function doPredict(async_mode) {
+  const errEl = document.getElementById('predictError');
+  const warnEl = document.getElementById('predictWarn');
+  const spinner = document.getElementById('predictSpinner');
+  clearAlerts('predictError', 'predictWarn');
+  document.getElementById('resultCard').classList.remove('show');
+  document.getElementById('asyncCard').style.display = 'none';
+  document.getElementById('validationPanel').classList.remove('show');
+
+  if (!selectedModel) { showAlert(errEl, 'Выберите ML-модель'); return; }
+
+  let input_data;
+  try {
+    input_data = JSON.parse(document.getElementById('featuresInput').value || '{}');
+  } catch {
+    showAlert(errEl, 'Невалидный JSON. Проверьте формат входных данных.'); return;
+  }
+  if (!Object.keys(input_data).length) { showAlert(errEl, 'Введите хотя бы одно поле'); return; }
+
+  spinner.classList.remove('hidden');
+  try {
+    const endpoint = async_mode ? '/predict/async' : '/predict/';
+    const r = await api('POST', endpoint, { model_id: selectedModel, input_data });
+
+    if (async_mode) {
+      document.getElementById('asyncTaskId').textContent = r.task_id;
+      document.getElementById('asyncStatus').textContent = r.status;
+      document.getElementById('asyncStatus').className = 'badge badge-yellow';
+      document.getElementById('asyncCard').style.display = 'block';
+    } else {
+      // Показываем валидацию
+      if (r.validation_errors && r.validation_errors.length) {
+        showValidation(input_data, r.validation_errors);
+        showAlert(warnEl, `${r.validation_errors.length} поле(й) отклонено, предсказание выполнено по остальным.`);
+      }
+
+      // Показываем результат
+      if (r.result) {
+        const pred = r.result.prediction;
+        const predEl = document.getElementById('resultPrediction');
+        predEl.textContent = pred;
+        predEl.className = 'result-prediction ' + (pred === 'positive' ? 'positive' : 'negative');
+        document.getElementById('resultModel').textContent = r.result.model || '—';
+        document.getElementById('resultConf').textContent = r.result.confidence != null
+          ? (r.result.confidence * 100).toFixed(0) + '%' : '—';
+        document.getElementById('resultCharged').textContent = r.credits_charged != null
+          ? '-' + r.credits_charged.toFixed(1) + ' кр.' : '—';
+        document.getElementById('resultCard').classList.add('show');
+      }
+
+      await loadBalance();
+      await loadDashboard();
+    }
+  } catch(e) {
+    if (e.status === 402) {
+      showAlert(errEl, '💳 Недостаточно кредитов. Пополните баланс.');
+    } else {
+      showAlert(errEl, e.detail || 'Ошибка предсказания');
+    }
+  } finally {
+    spinner.classList.add('hidden');
+  }
+}
+
+function showValidation(input_data, errors) {
+  const errFields = new Set(errors.map(e => e.field));
+  const validEl = document.getElementById('validOk');
+  const errEl = document.getElementById('validErr');
+
+  const valid = Object.keys(input_data).filter(k => !errFields.has(k));
+  validEl.innerHTML = valid.length
+    ? '<div style="font-size:.75rem;color:var(--text2);margin-bottom:.4rem;font-family:var(--mono)">ОБРАБОТАНЫ</div>'
+      + valid.map(k => `<div class="val-row"><div class="val-dot" style="background:var(--green)"></div><span style="color:var(--green)">${k}</span><span style="color:var(--text3);margin-left:auto">${input_data[k]}</span></div>`).join('')
+    : '';
+
+  errEl.innerHTML = errors.length
+    ? '<div style="font-size:.75rem;color:var(--text2);margin-bottom:.4rem;font-family:var(--mono)">ОТКЛОНЕНЫ</div>'
+      + errors.map(e => `<div class="val-row"><div class="val-dot" style="background:var(--red)"></div><span style="color:var(--red)">${e.field}</span><span style="color:var(--text3);margin-left:.5rem;font-size:.7rem">${e.error}</span></div>`).join('')
+    : '';
+
+  document.getElementById('validationPanel').classList.add('show');
+}
+
+async function pollTask() {
+  const taskId = document.getElementById('asyncTaskId').textContent;
+  try {
+    const r = await api('GET', '/predict/' + taskId);
+    const statusEl = document.getElementById('asyncStatus');
+    statusEl.textContent = r.status;
+    const cls = { completed: 'badge-green', failed: 'badge-red', processing: 'badge-blue', pending: 'badge-yellow' };
+    statusEl.className = 'badge ' + (cls[r.status] || 'badge-gray');
+
+    if (r.status === 'completed' && r.result) {
+      const pred = r.result.prediction;
+      const predEl = document.getElementById('resultPrediction');
+      predEl.textContent = pred;
+      predEl.className = 'result-prediction ' + (pred === 'positive' ? 'positive' : 'negative');
+      document.getElementById('resultModel').textContent = r.model_name || '—';
+      document.getElementById('resultConf').textContent = r.result.confidence != null
+        ? (r.result.confidence * 100).toFixed(0) + '%' : '—';
+      document.getElementById('resultCharged').textContent = r.credits_charged != null
+        ? '-' + r.credits_charged.toFixed(1) + ' кр.' : '—';
+      document.getElementById('resultCard').classList.add('show');
+      await loadBalance();
+    }
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+// HISTORY
+let histTab = 'ml';
+async function loadHistory() {
+  if (histTab === 'ml') {
+    try {
+      const tasks = await api('GET', '/history/ml-requests?limit=50');
+      const tbody = document.getElementById('histMLBody');
+      if (!tasks.length) {
+        tbody.innerHTML = '<tr><td colspan="5"><div class="empty"><div class="empty-icon">◌</div><div class="empty-text">Нет ML-запросов</div></div></td></tr>';
+      } else {
+        tbody.innerHTML = tasks.map(t => `
+          <tr>
+            <td class="mono text2" style="font-size:.75rem">${fmtDate(t.created_at)}</td>
+            <td>${t.model_name}</td>
+            <td>${statusBadge(t.status)}</td>
+            <td class="mono">${t.credits_charged != null ? t.credits_charged.toFixed(1) : '—'}</td>
+            <td style="font-size:.8rem;color:var(--text2)">${t.result ? (t.result.prediction || '—') : '—'}</td>
+          </tr>`).join('');
+      }
+    } catch {}
+  } else {
+    try {
+      const txs = await api('GET', '/history/transactions?limit=50');
+      const tbody = document.getElementById('histTxBody');
+      if (!txs.length) {
+        tbody.innerHTML = '<tr><td colspan="4"><div class="empty"><div class="empty-icon">◌</div><div class="empty-text">Нет транзакций</div></div></td></tr>';
+      } else {
+        tbody.innerHTML = txs.map(t => `
+          <tr>
+            <td class="mono text2" style="font-size:.75rem">${fmtDate(t.created_at)}</td>
+            <td>${t.type === 'deposit'
+              ? '<span class="badge badge-green">+ пополнение</span>'
+              : '<span class="badge badge-red">− списание</span>'}</td>
+            <td class="mono" style="color:${t.type==='deposit'?'var(--green)':'var(--red)'}">
+              ${t.type==='deposit'?'+':'−'}${t.amount.toFixed(1)}
+            </td>
+            <td class="mono text3" style="font-size:.75rem">${t.task_id || '—'}</td>
+          </tr>`).join('');
+      }
+    } catch {}
+  }
+}
+
+function switchHistTab(tab) {
+  histTab = tab;
+  document.getElementById('histML').classList.toggle('hidden', tab !== 'ml');
+  document.getElementById('histTx').classList.toggle('hidden', tab !== 'tx');
+  document.getElementById('htabML').className = 'btn btn-sm ' + (tab === 'ml' ? 'btn-outline' : 'btn-ghost');
+  document.getElementById('htabTx').className = 'btn btn-sm ' + (tab === 'tx' ? 'btn-outline' : 'btn-ghost');
+  loadHistory();
+}
+
+// ADMIN
+async function loadAdminTx() {
+  try {
+    const txs = await api('GET', '/history/admin/transactions?limit=100');
+    const tbody = document.getElementById('adminTxBody');
+    if (!txs.length) {
+      tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><div class="empty-icon">◌</div><div class="empty-text">Нет транзакций</div></div></td></tr>';
+    } else {
+      tbody.innerHTML = txs.map(t => `
+        <tr>
+          <td class="mono text3" style="font-size:.75rem">${t.id}</td>
+          <td class="mono" style="font-size:.8rem">${t.user_id || '—'}</td>
+          <td>${t.type === 'deposit'
+            ? '<span class="badge badge-green">deposit</span>'
+            : '<span class="badge badge-red">debit</span>'}</td>
+          <td class="mono">${t.amount.toFixed(1)}</td>
+          <td class="mono text3" style="font-size:.75rem">${t.task_id || '—'}</td>
+          <td class="mono text2" style="font-size:.75rem">${fmtDate(t.created_at)}</td>
+        </tr>`).join('');
+    }
+  } catch {}
+}
+
+async function doAdminDeposit() {
+  const userId = parseInt(document.getElementById('adminUserId').value);
+  const amount = parseFloat(document.getElementById('adminAmount').value);
+  const errEl = document.getElementById('adminDepositErr');
+  const okEl = document.getElementById('adminDepositOk');
+  clearAlerts('adminDepositErr', 'adminDepositOk');
+  if (!userId) { showAlert(errEl, 'Введите ID пользователя'); return; }
+  if (!amount || amount <= 0) { showAlert(errEl, 'Введите корректную сумму'); return; }
+  try {
+    const r = await api('POST', '/balance/admin/deposit', { user_id: userId, amount });
+    showAlert(okEl, `Баланс пользователя ${userId} пополнен на ${amount} кр. Итого: ${r.amount.toFixed(1)} кр.`);
+  } catch(e) {
+    showAlert(errEl, e.detail || 'Ошибка');
+  }
+}
+
+// NAVIGATION
+const pages = { dashboard: 'Дашборд', predict: 'ML-предсказание', history: 'История', admin: 'Администратор' };
+
+function showPage(name) {
+  Object.keys(pages).forEach(p => {
+    const el = document.getElementById('page' + p.charAt(0).toUpperCase() + p.slice(1));
+    if (el) el.classList.toggle('hidden', p !== name);
+    const nav = document.querySelector(`[data-page="${p}"]`);
+    if (nav) nav.classList.toggle('active', p === name);
+  });
+  document.getElementById('pageTitle').textContent = pages[name] || name;
+
+  if (name === 'history') loadHistory();
+  if (name === 'admin') loadAdminTx();
+  if (name === 'dashboard') loadDashboard();
+}
+
+// UTILS
+function showAlert(el, msg) {
+  el.textContent = msg;
+  el.classList.add('show');
+}
+function clearAlerts(...ids) {
+  ids.forEach(id => document.getElementById(id).classList.remove('show'));
+}
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('ru') + ' ' + d.toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' });
+}
+function statusBadge(s) {
+  const map = { completed: 'badge-green', failed: 'badge-red', pending: 'badge-yellow', processing: 'badge-blue' };
+  const labels = { completed: 'выполнено', failed: 'ошибка', pending: 'ожидание', processing: 'обработка' };
+  return `<span class="badge ${map[s]||'badge-gray'}">${labels[s]||s}</span>`;
+}
+
+// Enter key support
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    if (document.getElementById('loginEmail') === document.activeElement ||
+        document.getElementById('loginPassword') === document.activeElement) doLogin();
+    if (document.getElementById('regEmail') === document.activeElement ||
+        document.getElementById('regPassword') === document.activeElement) doRegister();
+  }
+  if (e.key === 'Escape') {
+    document.getElementById('authModal').classList.remove('open');
+    document.getElementById('depositModal').classList.remove('open');
+  }
+});
+
+// Close modal on overlay click
+document.getElementById('authModal').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('open');
+});
+document.getElementById('depositModal').addEventListener('click', function(e) {
+  if (e.target === this) closeDeposit();
+});
+
+init();
+</script>
+</body>
+</html>
