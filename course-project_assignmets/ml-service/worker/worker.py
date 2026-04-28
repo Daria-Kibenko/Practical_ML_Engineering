@@ -6,12 +6,14 @@ ML-воркер — Consumer RabbitMQ.
 Каждый воркер:
   1. Подключается к RabbitMQ с retry.
   2. Берёт по одному сообщению (prefetch=1 — честный round-robin).
-  3. Валидирует входные данные.
-  4. Выполняет ML-предсказание.
-  5. Списывает кредиты через BalanceService (с SELECT FOR UPDATE).
-  6. Сохраняет результат в PostgreSQL.
+  3. Валидирует входные данные (только числовые признаки).
+  4. Выполняет предсказание через РЕАЛЬНУЮ ML-модель (sklearn).
+  5. Списывает кредиты через BalanceService (SELECT FOR UPDATE).
+  6. Сохраняет результат в PostgreSQL напрямую.
   7. Подтверждает обработку (ack) либо отклоняет без requeue (nack).
 """
+
+from __future__ import annotations
 
 import json
 import logging
@@ -27,55 +29,73 @@ import pika.exceptions
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-# Конфигурация из переменных окружения
-RABBITMQ_HOST = os.getenv("RABBITMQ_HOST", "rabbitmq")
-RABBITMQ_PORT = int(os.getenv("RABBITMQ_PORT", "5672"))
-RABBITMQ_USER = os.getenv("RABBITMQ_USER", "guest")
-RABBITMQ_PASS = os.getenv("RABBITMQ_PASSWORD", "guest")
+# Конфигурация
+RABBITMQ_HOST  = os.getenv("RABBITMQ_HOST", "rabbitmq")
+RABBITMQ_PORT  = int(os.getenv("RABBITMQ_PORT", "5672"))
+RABBITMQ_USER  = os.getenv("RABBITMQ_USER", "guest")
+RABBITMQ_PASS  = os.getenv("RABBITMQ_PASSWORD", "guest")
 RABBITMQ_QUEUE = os.getenv("RABBITMQ_QUEUE", "ml_tasks")
 
-DB_URL = (
-    "postgresql+psycopg2://{user}:{pw}@{host}:{port}/{db}".format(
-        user=os.getenv("DB_USER", "postgres"),
-        pw=os.getenv("DB_PASSWORD", "postgres"),
-        host=os.getenv("DB_HOST", "database"),
-        port=os.getenv("DB_PORT", "5432"),
-        db=os.getenv("DB_NAME", "ml_service"),
-    )
+DB_URL = "postgresql+psycopg2://{user}:{pw}@{host}:{port}/{db}".format(
+    user=os.getenv("DB_USER", "postgres"),
+    pw=os.getenv("DB_PASSWORD", "postgres"),
+    host=os.getenv("DB_HOST", "database"),
+    port=os.getenv("DB_PORT", "5432"),
+    db=os.getenv("DB_NAME", "ml_service"),
 )
 
 WORKER_ID = socket.gethostname()
 
 logging.basicConfig(
     level=logging.INFO,
-    format=f"%(asctime)s | %(levelname)s | worker={WORKER_ID} | %(message)s",
+    format="%(asctime)s | %(levelname)s | worker=" + WORKER_ID + " | %(message)s",
 )
 logger = logging.getLogger(__name__)
+
+# sys.path: работает и в Docker, и локально в PyCharm
+# Docker:  worker.py → /app/worker.py,  src/ → /app/src/
+# PyCharm: worker.py → .../worker/worker.py, src/ → .../app/src/
+_worker_dir = os.path.dirname(os.path.abspath(__file__))
+
+if os.path.isdir(os.path.join(_worker_dir, "src")):
+    _app_root = _worker_dir                                          # Docker
+else:
+    _app_root = os.path.abspath(os.path.join(_worker_dir, "..", "app"))  # локально
+
+if _app_root not in sys.path:
+    sys.path.insert(0, _app_root)
+
+logger.debug("app root: %s", _app_root)
+
+# Импорты из пакета src (общий код с FastAPI-приложением)
+from src.models.domain import TaskStatus                                      # noqa: E402
+from src.models.orm import MLModelORM, MLTaskORM, PredictionResultORM         # noqa: E402
+from src.services.balance_service import BalanceService, InsufficientFundsError  # noqa: E402
+from src.services.ml_engine import run_prediction                              # noqa: E402
 
 # БД
 engine = create_engine(DB_URL, pool_pre_ping=True)
 SessionLocal = sessionmaker(bind=engine)
 
-sys.path.insert(0, os.path.dirname(__file__))
 
-from src.models.domain import MLModel, TaskStatus
-from src.models.orm import MLModelORM, MLTaskORM, PredictionResultORM, UserORM
-from src.services.balance_service import BalanceService, InsufficientFundsError
-
-
-# Валидация
-def validate_features(features: Dict[str, Any]) -> Tuple[Dict[str, float], List[str]]:
+# Валидация входных данных
+def validate_features(
+    features: Dict[str, Any],
+) -> Tuple[Dict[str, float], List[str]]:
+    """Отделяет числовые признаки от невалидных."""
     valid: Dict[str, float] = {}
     errors: List[str] = []
     for key, value in features.items():
         if isinstance(value, (int, float)):
             valid[key] = float(value)
         else:
-            errors.append(f"{key}: ожидается число, получено {type(value).__name__!r}")
+            errors.append(
+                "{}: ожидается число, получено {!r}".format(key, type(value).__name__)
+            )
     return valid, errors
 
 
-# Обработка сообщения
+# Обработка одного сообщения
 def process_message(body: bytes) -> None:
     raw = body.decode("utf-8")
     logger.info("Получено: %s", raw[:200])
@@ -88,7 +108,7 @@ def process_message(body: bytes) -> None:
 
     task_id: Optional[int] = data.get("task_id")
     features: Dict[str, Any] = data.get("features", {})
-    model_name: str = data.get("model", "unknown")
+    model_name: str = data.get("model", "Classifier v1")
 
     if not task_id:
         logger.error("Нет task_id — пропускаем")
@@ -106,28 +126,27 @@ def process_message(body: bytes) -> None:
         db.commit()
 
         try:
-            # Валидация
+            # 1. Валидация
             valid_features, errors = validate_features(features)
             if errors:
-                logger.warning("Невалидные поля в задаче %s: %s", task_id, errors)
+                logger.warning("Невалидные поля задачи %s: %s", task_id, errors)
 
-            # Предсказание
+            # 2. Реальное ML-предсказание (sklearn)
             model_orm = db.get(MLModelORM, task.model_id)
             cost = model_orm.cost_per_prediction if model_orm else 1.0
 
-            domain_model = MLModel(
-                name=model_name,
-                description="",
-                cost_per_prediction=cost,
-                model_id=task.model_id
-            )
-            result = domain_model.predict(valid_features)
+            result = run_prediction(model_name, valid_features)
             result["worker_id"] = WORKER_ID
             result["processed_at"] = datetime.now(timezone.utc).isoformat()
             if errors:
                 result["validation_errors"] = errors
 
-            # Списываем кредиты через BalanceService (с SELECT FOR UPDATE)
+            logger.info(
+                "task_id=%s prediction=%s algorithm=%s",
+                task_id, result.get("prediction"), result.get("algorithm"),
+            )
+
+            # 3. Списываем кредиты через BalanceService (SELECT FOR UPDATE)
             try:
                 BalanceService(db).debit(
                     user_id=task.user_id,
@@ -135,10 +154,10 @@ def process_message(body: bytes) -> None:
                     task_id=task.id,
                 )
             except InsufficientFundsError as exc:
-                logger.warning("Задача %s: %s", task_id, exc)
-                cost = 0.0  # сохраняем результат, но не списываем
+                logger.warning("Задача %s: %s — результат сохранён без списания", task_id, exc)
+                cost = 0.0
 
-            # Сохраняем результат
+            # 4. Сохраняем результат
             db.add(PredictionResultORM(
                 task_id=task.id,
                 output_data=result,
@@ -147,21 +166,18 @@ def process_message(body: bytes) -> None:
             task.status = TaskStatus.COMPLETED
             db.commit()
 
-            logger.info(
-                "Задача %s завершена | prediction=%s | charged=%.2f",
-                task_id, result.get("prediction"), cost,
-            )
+            logger.info("Задача %s завершена | charged=%.2f", task_id, cost)
 
         except Exception as exc:
             db.rollback()
             task.status = TaskStatus.FAILED
             db.commit()
-            logger.error("Ошибка при обработке задачи %s: %s", task_id, exc)
-            raise  # чтобы nack сработал в callback
+            logger.error("Ошибка задачи %s: %s", task_id, exc)
+            raise
 
 
 # RabbitMQ Consumer
-def callback(ch, method, properties, body):
+def callback(ch, method, _properties, body):
     try:
         process_message(body)
         ch.basic_ack(delivery_tag=method.delivery_tag)
@@ -172,9 +188,11 @@ def callback(ch, method, properties, body):
 
 def connect_with_retry(max_retries: int = 10, delay: int = 5) -> pika.BlockingConnection:
     params = pika.ConnectionParameters(
-        host=RABBITMQ_HOST, port=RABBITMQ_PORT,
+        host=RABBITMQ_HOST,
+        port=RABBITMQ_PORT,
         credentials=pika.PlainCredentials(RABBITMQ_USER, RABBITMQ_PASS),
-        heartbeat=600, blocked_connection_timeout=300,
+        heartbeat=600,
+        blocked_connection_timeout=300,
     )
     for attempt in range(1, max_retries + 1):
         try:
@@ -182,9 +200,14 @@ def connect_with_retry(max_retries: int = 10, delay: int = 5) -> pika.BlockingCo
             logger.info("Подключён к RabbitMQ (попытка %d)", attempt)
             return conn
         except pika.exceptions.AMQPConnectionError:
-            logger.warning("RabbitMQ недоступен, жду %ds (попытка %d/%d)", delay, attempt, max_retries)
+            logger.warning(
+                "RabbitMQ недоступен, жду %ds (попытка %d/%d)",
+                delay, attempt, max_retries,
+            )
             time.sleep(delay)
-    raise RuntimeError(f"Не удалось подключиться к RabbitMQ после {max_retries} попыток")
+    raise RuntimeError(
+        "Не удалось подключиться к RabbitMQ после {} попыток".format(max_retries)
+    )
 
 
 def start_worker() -> None:

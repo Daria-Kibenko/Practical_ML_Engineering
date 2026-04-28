@@ -30,7 +30,7 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; }
 
-/ LANDING
+/* ── LANDING ─────────────────────────────────────────────────────── */
 #landing {
   min-height: 100vh;
   display: flex;
@@ -117,7 +117,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
 .feat-title { font-weight: 500; margin-bottom: .5rem; }
 .feat-desc { font-size: .9rem; color: var(--text2); line-height: 1.6; }
 
-/ APP SHELL
+/* ── APP SHELL ───────────────────────────────────────────────────── */
 #app {
   display: none;
   min-height: 100vh;
@@ -194,7 +194,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
 
 .content { padding: 2rem; flex: 1; }
 
-/ AUTH MODAL
+/* ── AUTH MODAL ──────────────────────────────────────────────────── */
 .modal-overlay {
   position: fixed; inset: 0;
   background: rgba(0,0,0,.7);
@@ -239,7 +239,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
   padding: .25rem;
 }
 
-/ FORMS
+/* ── FORMS ───────────────────────────────────────────────────────── */
 .form-group { margin-bottom: 1rem; }
 label { display: block; font-size: .8rem; color: var(--text2); margin-bottom: .4rem; font-weight: 500; }
 input, select, textarea {
@@ -257,7 +257,7 @@ input, select, textarea {
 input:focus, select:focus, textarea:focus { border-color: var(--accent); }
 textarea { resize: vertical; min-height: 100px; font-family: var(--mono); font-size: .8rem; }
 
-/ BUTTONS
+/* ── BUTTONS ─────────────────────────────────────────────────────── */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -285,7 +285,7 @@ textarea { resize: vertical; min-height: 100px; font-family: var(--mono); font-s
 .btn-full { width: 100%; justify-content: center; }
 .btn-lg { padding: .8rem 2rem; font-size: 1rem; }
 
-/ CARDS
+/* ── CARDS ───────────────────────────────────────────────────────── */
 .card {
   background: var(--bg2);
   border: 1px solid var(--border);
@@ -301,7 +301,7 @@ textarea { resize: vertical; min-height: 100px; font-family: var(--mono); font-s
 .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
 .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
 
-/ ALERTS
+/* ── ALERTS ──────────────────────────────────────────────────────── */
 .alert {
   padding: .75rem 1rem;
   border-radius: var(--radius);
@@ -315,7 +315,7 @@ textarea { resize: vertical; min-height: 100px; font-family: var(--mono); font-s
 .alert-warn { background: rgba(240,165,0,.1); border: 1px solid rgba(240,165,0,.3); color: var(--accent); }
 .alert-info { background: rgba(88,166,255,.1); border: 1px solid rgba(88,166,255,.3); color: #79c0ff; }
 
-/ TABLES
+/* ── TABLES ──────────────────────────────────────────────────────── */
 .table-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; font-size: .875rem; }
 th { text-align: left; padding: .6rem 1rem; color: var(--text2); font-weight: 500; font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; border-bottom: 1px solid var(--border); }
@@ -323,7 +323,7 @@ td { padding: .75rem 1rem; border-bottom: 1px solid rgba(48,54,61,.5); }
 tr:last-child td { border-bottom: none; }
 tr:hover td { background: rgba(255,255,255,.02); }
 
-/ BADGES
+/* ── BADGES ──────────────────────────────────────────────────────── */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -341,7 +341,7 @@ tr:hover td { background: rgba(255,255,255,.02); }
 .badge-blue { background: rgba(88,166,255,.15); color: var(--blue); }
 .badge-gray { background: rgba(139,148,158,.15); color: var(--text2); }
 
-/ PREDICT FORM
+/* ── PREDICT FORM ────────────────────────────────────────────────── */
 .predict-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
 .features-editor { position: relative; }
 .features-hint { font-size: .75rem; color: var(--text3); margin-top: .4rem; font-family: var(--mono); }
@@ -380,7 +380,7 @@ tr:hover td { background: rgba(255,255,255,.02); }
 .result-meta-item { font-size: .8rem; }
 .result-meta-item span { display: block; color: var(--text2); font-size: .7rem; margin-bottom: .2rem; font-family: var(--mono); }
 
-/ DEPOSIT MODAL
+/* ── DEPOSIT MODAL ───────────────────────────────────────────────── */
 .amount-presets { display: flex; gap: .5rem; margin-bottom: .75rem; flex-wrap: wrap; }
 .preset-btn {
   padding: .4rem .85rem;
@@ -395,7 +395,7 @@ tr:hover td { background: rgba(255,255,255,.02); }
 }
 .preset-btn:hover { border-color: var(--accent); color: var(--accent); }
 
-/ LOADER
+/* ── LOADER ──────────────────────────────────────────────────────── */
 .spinner {
   display: inline-block;
   width: 16px; height: 16px;
@@ -406,7 +406,7 @@ tr:hover td { background: rgba(255,255,255,.02); }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/ EMPTY STATE
+/* ── EMPTY STATE ─────────────────────────────────────────────────── */
 .empty {
   text-align: center;
   padding: 4rem 2rem;
@@ -415,7 +415,7 @@ tr:hover td { background: rgba(255,255,255,.02); }
 .empty-icon { font-size: 2.5rem; margin-bottom: 1rem; }
 .empty-text { font-size: .9rem; }
 
-/ MISC
+/* ── MISC ────────────────────────────────────────────────────────── */
 .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
 .section-title { font-size: 1rem; font-weight: 500; }
 .mono { font-family: var(--mono); }
@@ -429,7 +429,7 @@ tr:hover td { background: rgba(255,255,255,.02); }
 .hidden { display: none !important; }
 hr.sep { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
 
-/ MODEL SELECTOR
+/* ── MODEL SELECTOR ──────────────────────────────────────────────── */
 .model-cards { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .75rem; margin-bottom: 1rem; }
 .model-card {
   border: 1px solid var(--border);
@@ -445,7 +445,7 @@ hr.sep { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
 .model-cost { font-family: var(--mono); font-size: .75rem; color: var(--accent); }
 .model-desc { font-size: .75rem; color: var(--text2); margin-top: .4rem; line-height: 1.5; }
 
-/ ADMIN
+/* ── ADMIN ───────────────────────────────────────────────────────── */
 .admin-badge {
   display: inline-flex; align-items: center; gap: .3rem;
   font-size: .7rem; font-family: var(--mono); text-transform: uppercase;
@@ -465,7 +465,7 @@ hr.sep { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
 </head>
 <body>
 
-<!-- ─── LANDING ─── -->
+<!-- ══════════════════ LANDING ══════════════════ -->
 <div id="landing">
   <nav class="land-nav">
     <div class="logo">ml_service</div>
@@ -514,7 +514,7 @@ hr.sep { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
   </div>
 </div>
 
-<!-- ─── AUTH MODAL ─── -->
+<!-- ══════════════════ AUTH MODAL ══════════════════ -->
 <div class="modal-overlay" id="authModal">
   <div class="modal" style="position:relative">
     <div class="modal-tabs">
@@ -560,7 +560,7 @@ hr.sep { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
   </div>
 </div>
 
-<!-- ─── DEPOSIT MODAL ─── -->
+<!-- ══════════════════ DEPOSIT MODAL ══════════════════ -->
 <div class="modal-overlay" id="depositModal">
   <div class="modal" style="position:relative">
     <div class="modal-title">Пополнить баланс</div>
@@ -588,7 +588,7 @@ hr.sep { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
   </div>
 </div>
 
-<!-- ─── APP SHELL ─── -->
+<!-- ══════════════════ APP SHELL ══════════════════ -->
 <div id="app">
   <aside class="sidebar">
     <div class="sidebar-logo">ml_service</div>
@@ -829,7 +829,9 @@ hr.sep { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
 </div><!-- /app -->
 
 <script>
+// ════════════════════════════════════════════════════════════
 // STATE
+// ════════════════════════════════════════════════════════════
 const API = '';  // same origin — nginx proxies /api calls to FastAPI
 let token = localStorage.getItem('token');
 let currentUser = null;
@@ -837,7 +839,9 @@ let models = [];
 let selectedModel = null;
 let pollInterval = null;
 
+// ════════════════════════════════════════════════════════════
 // API HELPERS
+// ════════════════════════════════════════════════════════════
 async function api(method, path, body) {
   const opts = {
     method,
@@ -851,7 +855,9 @@ async function api(method, path, body) {
   return data;
 }
 
+// ════════════════════════════════════════════════════════════
 // INIT
+// ════════════════════════════════════════════════════════════
 async function init() {
   if (!token) return showLanding();
   try {
@@ -888,7 +894,9 @@ async function showApp() {
   await loadModels();
 }
 
+// ════════════════════════════════════════════════════════════
 // AUTH
+// ════════════════════════════════════════════════════════════
 function openAuth(tab) {
   document.getElementById('authModal').classList.add('open');
   switchTab(tab);
@@ -951,7 +959,9 @@ function doLogout() {
   showLanding();
 }
 
+// ════════════════════════════════════════════════════════════
 // BALANCE
+// ════════════════════════════════════════════════════════════
 async function loadBalance() {
   try {
     const b = await api('GET', '/balance/');
@@ -994,7 +1004,9 @@ async function doDeposit() {
   }
 }
 
+// ════════════════════════════════════════════════════════════
 // DASHBOARD
+// ════════════════════════════════════════════════════════════
 async function loadDashboard() {
   try {
     const tasks = await api('GET', '/history/ml-requests?limit=5');
@@ -1021,7 +1033,9 @@ async function loadDashboard() {
   } catch {}
 }
 
+// ════════════════════════════════════════════════════════════
 // MODELS
+// ════════════════════════════════════════════════════════════
 async function loadModels() {
   try {
     models = await api('GET', '/predict/models');
@@ -1046,7 +1060,9 @@ function selectModel(id) {
   renderModelCards();
 }
 
+// ════════════════════════════════════════════════════════════
 // PREDICT
+// ════════════════════════════════════════════════════════════
 async function doPredict(async_mode) {
   const errEl = document.getElementById('predictError');
   const warnEl = document.getElementById('predictWarn');
@@ -1157,7 +1173,9 @@ async function pollTask() {
   }
 }
 
+// ════════════════════════════════════════════════════════════
 // HISTORY
+// ════════════════════════════════════════════════════════════
 let histTab = 'ml';
 async function loadHistory() {
   if (histTab === 'ml') {
@@ -1209,7 +1227,9 @@ function switchHistTab(tab) {
   loadHistory();
 }
 
+// ════════════════════════════════════════════════════════════
 // ADMIN
+// ════════════════════════════════════════════════════════════
 async function loadAdminTx() {
   try {
     const txs = await api('GET', '/history/admin/transactions?limit=100');
@@ -1248,7 +1268,9 @@ async function doAdminDeposit() {
   }
 }
 
+// ════════════════════════════════════════════════════════════
 // NAVIGATION
+// ════════════════════════════════════════════════════════════
 const pages = { dashboard: 'Дашборд', predict: 'ML-предсказание', history: 'История', admin: 'Администратор' };
 
 function showPage(name) {
@@ -1265,7 +1287,9 @@ function showPage(name) {
   if (name === 'dashboard') loadDashboard();
 }
 
+// ════════════════════════════════════════════════════════════
 // UTILS
+// ════════════════════════════════════════════════════════════
 function showAlert(el, msg) {
   el.textContent = msg;
   el.classList.add('show');

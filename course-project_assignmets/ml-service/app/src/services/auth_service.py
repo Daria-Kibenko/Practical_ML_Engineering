@@ -68,7 +68,7 @@ def get_current_user(
 def get_current_admin(
     current_user: UserORM = Depends(get_current_user),
 ) -> UserORM:
-    from ..models.domain import UserRole
+    from src.models.domain import UserRole
     if current_user.role != UserRole.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

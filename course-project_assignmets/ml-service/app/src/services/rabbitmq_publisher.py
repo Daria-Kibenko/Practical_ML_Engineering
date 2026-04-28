@@ -61,7 +61,7 @@ def publish_ml_task(
         connection = _get_connection()
         channel = connection.channel()
 
-        # Объявляем очередь (идемпотентно — создаст, если не существует)
+        # Объявляем очередь
         channel.queue_declare(queue=QUEUE_NAME, durable=True)
 
         channel.basic_publish(

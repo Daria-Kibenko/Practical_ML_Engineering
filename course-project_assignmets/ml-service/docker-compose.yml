@@ -2,7 +2,6 @@ version: "3.9"
 
 services:
 
-  # 1. Backend-приложение FastAPI
   app:
     build:
       context: ./app
@@ -20,11 +19,10 @@ services:
       - "8000"
     restart: unless-stopped
 
-  # 2. Reverse-proxy (Nginx)
   web-proxy:
     build:
-      context: ./web-proxy
-      dockerfile: Dockerfile
+      context: .           # контекст — корень проекта, чтобы достать frontend/
+      dockerfile: web-proxy/Dockerfile
     ports:
       - "80:80"
       - "443:443"
@@ -32,15 +30,12 @@ services:
       - app
     restart: unless-stopped
 
-  # 3. Брокер сообщений (RabbitMQ)
-  #    restart: on-failure — перезапускать только при сбое, не при docker stop
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
     ports:
       - "5672:5672"
       - "15672:15672"
     volumes:
-      # Named volume — данные очередей переживают docker compose down
       - rabbitmq_data:/var/lib/rabbitmq
     environment:
       RABBITMQ_DEFAULT_USER: guest
@@ -50,11 +45,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    restart: on-failure   # только при сбое, не при штатной остановке
+    restart: on-failure
 
-  # 4. База данных PostgreSQL
-  #    Named volume (не bind mount) — данные хранятся в Docker volume,
-  #    не зависят от структуры файловой системы хоста.
   database:
     image: postgres:16-alpine
     environment:
@@ -62,7 +54,6 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     volumes:
-      # Named volume — НЕ bind mount. Данные сохраняются при удалении контейнера.
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d ml_service"]
@@ -71,14 +62,12 @@ services:
       retries: 5
     restart: unless-stopped
 
-  # 5. ML-воркер (Consumer RabbitMQ)
-  #    Масштабирование: docker compose up --scale worker=3
   worker:
     build:
       context: ./worker
       dockerfile: Dockerfile
     volumes:
-      - ./app/src:/app/src   # воркер использует общие ORM-модели из app
+      - ./app/src:/app/src
     environment:
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
@@ -97,10 +86,8 @@ services:
         condition: service_healthy
     deploy:
       replicas: 2
-    restart: on-failure   # ← воркер тоже перезапускается только при сбое
+    restart: on-failure
 
-# Именованные тома (named volumes)
-# Управляются Docker-ом, не зависят от пути на хосте.
 volumes:
-  postgres_data:    # данные PostgreSQL
-  rabbitmq_data:    # данные очередей RabbitMQ
+  postgres_data:
+  rabbitmq_data:

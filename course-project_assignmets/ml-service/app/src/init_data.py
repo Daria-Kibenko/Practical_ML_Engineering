@@ -1,6 +1,4 @@
 """
-Задание №3 — инициализация базы данных стандартными данными.
-
 Создаёт (если не существуют):
   - демо-пользователя  (user@example.com  / password123) + начальный баланс 100
   - демо-администратора (admin@example.com / admin123)   + начальный баланс 1000
@@ -62,6 +60,8 @@ def init_db(engine) -> None:
         _seed_models(db)
         db.commit()
 
+    from .ml_models.train_and_save import train_all
+    train_all()  # обучить реальные ML-модели если ещё нет
     logger.info("Инициализация БД завершена")
 
 

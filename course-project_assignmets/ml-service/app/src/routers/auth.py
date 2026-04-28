@@ -35,7 +35,6 @@ def register(body: RegisterRequest, db: Session = Depends(get_db)) -> UserORM:
         email=body.email,
         password_hash=hash_password(body.password),
         role=UserRole.USER,
-        balance=0.0,
     )
     db.add(user)
     db.commit()

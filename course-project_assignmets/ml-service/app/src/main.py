@@ -1,16 +1,20 @@
 """
-Задание №4 — REST API на FastAPI.
-
 Запуск: uvicorn src.main:app --reload
-Swagger UI: http://localhost/docs
+Web UI:   http://localhost/
+Swagger:  http://localhost/docs
 """
+
+from __future__ import annotations
 
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import AsyncGenerator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from .config import settings
 from .database import engine
@@ -23,33 +27,22 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+_STATIC_DIR = Path(__file__).parent / "static"
 
-# Lifespan (заменяет устаревший @app.on_event)
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    """
-    Код до yield выполняется при старте приложения.
-    Код после yield — при остановке (graceful shutdown).
-    """
     logger.info("Запуск приложения...")
-    # Создаём таблицы (если не существуют) и заполняем демо-данными.
-    # init_db внутри ждёт доступности БД перед созданием таблиц.
     init_db(engine)
     logger.info("Приложение готово к работе")
-
-    yield  # ← приложение работает
-
+    yield
     logger.info("Остановка приложения")
     engine.dispose()
 
 
-# Создание приложения
 app = FastAPI(
     title=settings.app_title,
-    description=(
-        "Личный кабинет пользователя ML-сервиса. "
-        "Регистрация, управление балансом, выполнение предсказаний, история запросов."
-    ),
+    description="ML Service — личный кабинет пользователя.",
     version="1.0.0",
     lifespan=lifespan,
     docs_url="/docs",
@@ -63,13 +56,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Роутеры
+# API-роутеры (подключаются первыми, чтобы /docs не перехватывал /)
 app.include_router(auth.router)
 app.include_router(balance.router)
 app.include_router(predict.router)
 app.include_router(history.router)
 
 
-@app.get("/health", tags=["Служебные"], summary="Проверка работоспособности")
+@app.get("/health", tags=["Служебные"], summary="Healthcheck")
 def health() -> dict:
     return {"status": "ok", "service": settings.app_title}
+
+
+# Раздача Web-интерфейса
+# Все неизвестные маршруты отдают index.html (SPA-режим)
+if _STATIC_DIR.is_dir():
+    app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
+
+    @app.get("/", include_in_schema=False)
+    def frontend_root() -> FileResponse:
+        return FileResponse(str(_STATIC_DIR / "index.html"))

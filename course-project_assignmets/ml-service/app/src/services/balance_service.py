@@ -7,7 +7,10 @@ BalanceService — единственная точка управления ба
 Использует SELECT ... FOR UPDATE для защиты от гонки при одновременных списаниях.
 """
 
+from __future__ import annotations
+
 from typing import Optional
+
 from sqlalchemy.orm import Session
 
 from ..models.orm import BalanceORM, TransactionORM
@@ -20,7 +23,7 @@ class InsufficientFundsError(Exception):
 
 class BalanceService:
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self._db = db
 
     # Получение баланса
@@ -41,8 +44,13 @@ class BalanceService:
         return self.get_balance(user_id).amount
 
     # Пополнение
-    def deposit(self, user_id: int, amount: float, task_id: Optional[int] = None) -> BalanceORM:
-        """Пополнить баланс. Фиксирует транзакцию."""
+    def deposit(
+        self,
+        user_id: int,
+        amount: float,
+        task_id: Optional[int] = None,
+    ) -> BalanceORM:
+        """Пополнить баланс. Автоматически фиксирует транзакцию типа DEPOSIT."""
         if amount <= 0:
             raise ValueError("Сумма пополнения должна быть положительной")
 
@@ -58,16 +66,21 @@ class BalanceService:
         return balance
 
     # Списание
-    def debit(self, user_id: int, amount: float, task_id: Optional[int] = None) -> BalanceORM:
+    def debit(
+        self,
+        user_id: int,
+        amount: float,
+        task_id: Optional[int] = None,
+    ) -> BalanceORM:
         """
         Списать кредиты с баланса.
+
         Использует SELECT FOR UPDATE — блокирует строку на время транзакции,
         чтобы два одновременных запроса не ушли в минус.
         """
         if amount <= 0:
             raise ValueError("Сумма списания должна быть положительной")
 
-        # Блокируем строку баланса на время операции
         balance = (
             self._db.query(BalanceORM)
             .filter(BalanceORM.user_id == user_id)

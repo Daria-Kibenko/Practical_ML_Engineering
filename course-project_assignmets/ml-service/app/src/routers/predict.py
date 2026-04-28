@@ -13,11 +13,12 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models.domain import MLModel, TaskStatus
+from ..models.domain import TaskStatus
 from ..models.orm import MLModelORM, MLTaskORM, PredictionResultORM, UserORM
 from ..schemas.schemas import MLModelResponse, PredictRequest, PredictResponse, ValidationError
 from ..services.auth_service import get_current_user
 from ..services.balance_service import BalanceService, InsufficientFundsError
+from ..services.ml_engine import run_prediction
 from ..services.rabbitmq_publisher import publish_ml_task
 
 router = APIRouter(prefix="/predict", tags=["ML-предсказания"])
@@ -74,11 +75,7 @@ def predict(
     db.flush()  # получаем task.id до commit
 
     # Выполняем предсказание
-    domain_model = MLModel(
-        name=model_orm.name, description=model_orm.description,
-        cost_per_prediction=model_orm.cost_per_prediction, model_id=model_orm.id,
-    )
-    output = domain_model.predict(valid_data)
+    output = run_prediction(model_orm.name, valid_data)
     if validation_errors:
         output["validation_errors"] = [e.model_dump() for e in validation_errors]
 
@@ -168,3 +165,17 @@ def get_task_status(
         result=task.result.output_data if task.result else None,
         credits_charged=task.result.credits_charged if task.result else None,
     )
+
+
+@router.get(
+    "/models/info",
+    summary="Метрики и датасеты реальных ML-моделей",
+    tags=["ML-предсказания"],
+)
+def models_info() -> dict:
+    """
+    Возвращает информацию об обученных моделях:
+    датасет, количество образцов, признаки, метрики качества.
+    """
+    from ..services.ml_engine import get_model_metadata
+    return get_model_metadata()
