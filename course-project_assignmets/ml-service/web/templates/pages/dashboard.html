@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Личный кабинет — ML Service{% endblock %}
+
+{% block content %}
+{# Страница личного кабинета — доступна только авторизованным.
+   Роутер уже проверил авторизацию на сервере (session["token"]). #}
+
+<div class="dashboard-header">
+  <div>
+    <h1 class="page-title">Личный кабинет</h1>
+    <p class="muted">{{ user.email }}</p>
+  </div>
+  <a href="/history" class="btn btn--outline">История операций →</a>
+</div>
+
+<div class="dashboard-grid">
+  {# Левая колонка: баланс #}
+  <div class="dashboard-col">
+    {% include "components/balance_card.html" %}
+  </div>
+
+  {# Правая колонка: форма предсказания #}
+  <div class="dashboard-col">
+    {% include "components/predict_form.html" %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Устанавливаем флаг авторизации для клиентской навигации
+  localStorage.setItem("ml_token", "authenticated");
+
+  // Быстрые шаблоны данных по выбранной модели
+  const TEMPLATES = {
+    "Classifier v1": [
+      "mean radius: 14.5",
+      "mean texture: 20.1",
+      "mean perimeter: 92.0",
+      "mean area: 654.0",
+      "mean smoothness: 0.098",
+    ].join("\n"),
+    "Regressor v1": [
+      "age: 0.038",
+      "sex: 0.050",
+      "bmi: 0.062",
+      "bp: 0.022",
+      "s1: -0.044",
+    ].join("\n"),
+    "Anomaly Detector": [
+      "mean radius: 25.0",
+      "mean texture: 17.0",
+      "mean area: 2000.0",
+      "worst radius: 30.0",
+      "worst area: 3000.0",
+    ].join("\n"),
+  };
+
+  const select = document.getElementById("model_id");
+  const textarea = document.getElementById("input_data");
+  const hint = document.getElementById("template-hint");
+
+  function updateTemplate() {
+    const name = select.options[select.selectedIndex].text.split(" — ")[0];
+    const tpl = TEMPLATES[name];
+    if (tpl && !textarea.value.trim()) {
+      textarea.placeholder = tpl;
+    }
+    hint.innerHTML = tpl
+      ? `<button type="button" class="btn btn--ghost" id="fill-template">
+           Заполнить пример для «${name}»
+         </button>`
+      : "";
+    document.getElementById("fill-template")?.addEventListener("click", () => {
+      textarea.value = tpl;
+    });
+  }
+
+  select?.addEventListener("change", updateTemplate);
+  updateTemplate();
+
+  // Кнопки быстрого пополнения
+  document.querySelectorAll(".preset-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelector("input[name=amount]").value = btn.dataset.amount;
+    });
+  });
+</script>
+{% endblock %}

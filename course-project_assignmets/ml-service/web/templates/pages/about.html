@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}О сервисе — ML Service{% endblock %}
+
+{% block content %}
+<div class="hero">
+  <h1 class="hero__title">ML Service</h1>
+  <p class="hero__subtitle">
+    Платформа машинного обучения с персональным кабинетом.
+    Отправляйте данные — получайте предсказания.
+  </p>
+  <div class="hero__actions guest-only">
+    <a href="/register" class="btn btn--primary btn--lg">Начать бесплатно</a>
+    <a href="/login" class="btn btn--outline btn--lg">Войти</a>
+  </div>
+  <div class="hero__actions auth-only">
+    <a href="/dashboard" class="btn btn--primary btn--lg">Перейти в кабинет</a>
+  </div>
+</div>
+
+<section class="features">
+  <div class="feature-grid">
+    <div class="feature-card">
+      <span class="feature-card__icon">🧠</span>
+      <h3>Три ML-модели</h3>
+      <p>Классификация, регрессия и детектор аномалий на реальных датасетах sklearn.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-card__icon">💳</span>
+      <h3>Кредитная система</h3>
+      <p>Пополняйте баланс и тратьте кредиты только за успешные предсказания.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-card__icon">📊</span>
+      <h3>История операций</h3>
+      <p>Все запросы и транзакции сохраняются — вы всегда видите что происходило.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-card__icon">⚡</span>
+      <h3>REST API</h3>
+      <p>Интегрируйте ML-предсказания в ваши приложения через открытый API.</p>
+    </div>
+  </div>
+</section>
+
+<section class="models-preview">
+  <h2>Доступные модели</h2>
+  <div class="model-list">
+    <div class="model-item">
+      <strong>Classifier v1</strong>
+      <span class="badge badge--completed">GradientBoosting</span>
+      <span class="muted">Датасет Breast Cancer Wisconsin · accuracy 94.7%</span>
+    </div>
+    <div class="model-item">
+      <strong>Regressor v1</strong>
+      <span class="badge badge--pending">RandomForest</span>
+      <span class="muted">Датасет Diabetes · MAE 43.9</span>
+    </div>
+    <div class="model-item">
+      <strong>Anomaly Detector</strong>
+      <span class="badge badge--failed">IsolationForest</span>
+      <span class="muted">Датасет Breast Cancer (normal) · recall 83%</span>
+    </div>
+  </div>
+</section>
+{% endblock %}

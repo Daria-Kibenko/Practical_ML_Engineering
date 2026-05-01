@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Вход — ML Service{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+  <div class="card auth-card">
+    <h2 class="card__title">Вход в аккаунт</h2>
+
+    {% if error %}
+      <div class="flash flash--error">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" action="/login" class="form">
+      <div class="form-group">
+        <label class="label" for="email">Email</label>
+        <input type="email" name="email" id="email" class="input" required autofocus>
+      </div>
+      <div class="form-group">
+        <label class="label" for="password">Пароль</label>
+        <input type="password" name="password" id="password" class="input" required>
+      </div>
+      <button type="submit" class="btn btn--primary btn--full">Войти</button>
+    </form>
+
+    <p class="auth-card__footer">
+      Нет аккаунта? <a href="/register">Зарегистрироваться</a>
+    </p>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // После успешного входа Flask уже делает redirect.
+  // Здесь сохраняем токен в localStorage если он пришёл в куке — нам нужно
+  // синхронизировать серверную сессию и клиентский localStorage.
+  // Токен хранится в flask-сессии (httpOnly cookie), поэтому JS
+  // запрашивает /api/token-check чтобы знать, авторизован ли пользователь.
+  document.querySelector("form").addEventListener("submit", function () {
+    // Флаг авторизации для клиентской навигации
+    // Реальный токен хранится в серверной сессии (более безопасно)
+    sessionStorage.setItem("ml_logging_in", "1");
+  });
+</script>
+{% endblock %}

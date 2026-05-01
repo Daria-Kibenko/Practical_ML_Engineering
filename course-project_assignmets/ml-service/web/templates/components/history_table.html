@@ -1,0 +1,35 @@
+{% if rows %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          {% for col in columns %}
+            <th>{{ col.label }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+          <tr>
+            {% for col in columns %}
+              <td>
+                {% set val = row[col.key] %}
+                {% if col.key == "status" %}
+                  <span class="badge badge--{{ val }}">{{ val }}</span>
+                {% elif col.key == "type" %}
+                  <span class="badge badge--{{ val }}">{{ val }}</span>
+                {% elif val is none %}
+                  <span class="muted">—</span>
+                {% else %}
+                  {{ val }}
+                {% endif %}
+              </td>
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <p class="empty-state">{{ empty_text | default("Нет данных") }}</p>
+{% endif %}

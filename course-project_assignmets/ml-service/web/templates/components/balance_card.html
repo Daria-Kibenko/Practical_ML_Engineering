@@ -1,0 +1,27 @@
+<div class="card">
+  <div class="card__header">
+    <h3 class="card__title">Баланс</h3>
+    <span class="balance-amount">{{ balance.amount | round(2) }} кредитов</span>
+  </div>
+  <form action="/deposit" method="post" class="deposit-form">
+    <div class="form-row">
+      <input
+        type="number"
+        name="amount"
+        class="input"
+        placeholder="Сумма пополнения"
+        min="1"
+        step="1"
+        required
+      >
+      <button type="submit" class="btn btn--primary">Пополнить</button>
+    </div>
+    <div class="deposit-presets">
+      {% for amount in [10, 50, 100, 500] %}
+        <button type="button" class="btn btn--ghost preset-btn" data-amount="{{ amount }}">
+          +{{ amount }}
+        </button>
+      {% endfor %}
+    </div>
+  </form>
+</div>

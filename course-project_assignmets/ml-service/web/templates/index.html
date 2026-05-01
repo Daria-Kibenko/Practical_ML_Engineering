@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}ML Service{% endblock %}
+
+{% block content %}
+{#
+  Эта страница — пустая «оболочка».
+  JS проверяет localStorage["ml_token"]:
+    • токен есть  → перенаправляет на /dashboard (страница авторизованного)
+    • токена нет  → подгружает содержимое landing-страницы (для гостей)
+  Таким образом / всегда отдаёт один шаблон, а содержимое зависит от состояния клиента.
+#}
+<div id="page-loading" class="page-loading">
+  <span class="spinner"></span>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Проверяем авторизацию и выполняем навигацию без перезагрузки страницы
+  (function () {
+    const token = localStorage.getItem("ml_token");
+    if (token) {
+      // Авторизован — переходим в кабинет
+      window.location.replace("/dashboard");
+    } else {
+      // Гость — переходим на лендинг
+      window.location.replace("/about");
+    }
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}История — ML Service{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">История операций</h1>
+  <a href="/dashboard" class="btn btn--outline">← Кабинет</a>
+</div>
+
+<div class="tabs" id="history-tabs">
+  <button class="tab tab--active" data-tab="ml">ML-запросы</button>
+  <button class="tab" data-tab="tx">Транзакции</button>
+</div>
+
+{# Вкладка ML-запросов #}
+<div id="tab-ml" class="tab-content">
+  {% set ml_columns = [
+    {"key": "id",             "label": "#"},
+    {"key": "model_name",     "label": "Модель"},
+    {"key": "status",         "label": "Статус"},
+    {"key": "credits_charged","label": "Кредитов"},
+    {"key": "created_at",     "label": "Дата"},
+  ] %}
+  {% with rows=ml_history, columns=ml_columns, empty_text="ML-запросов пока нет" %}
+    {% include "components/history_table.html" %}
+  {% endwith %}
+</div>
+
+{# Вкладка транзакций #}
+<div id="tab-tx" class="tab-content" style="display:none">
+  {% set tx_columns = [
+    {"key": "id",         "label": "#"},
+    {"key": "type",       "label": "Тип"},
+    {"key": "amount",     "label": "Сумма"},
+    {"key": "task_id",    "label": "Задача"},
+    {"key": "created_at", "label": "Дата"},
+  ] %}
+  {% with rows=transactions, columns=tx_columns, empty_text="Транзакций пока нет" %}
+    {% include "components/history_table.html" %}
+  {% endwith %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Переключение вкладок
+  document.querySelectorAll(".tab").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach(b => b.classList.remove("tab--active"));
+      document.querySelectorAll(".tab-content").forEach(c => c.style.display = "none");
+      btn.classList.add("tab--active");
+      document.getElementById("tab-" + btn.dataset.tab).style.display = "";
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Регистрация — ML Service{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+  <div class="card auth-card">
+    <h2 class="card__title">Создать аккаунт</h2>
+
+    {% if error %}
+      <div class="flash flash--error">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" action="/register" class="form">
+      <div class="form-group">
+        <label class="label" for="email">Email</label>
+        <input type="email" name="email" id="email" class="input" required autofocus>
+      </div>
+      <div class="form-group">
+        <label class="label" for="password">Пароль</label>
+        <input type="password" name="password" id="password" class="input"
+               required minlength="6" placeholder="Минимум 6 символов">
+      </div>
+      <button type="submit" class="btn btn--primary btn--full">Зарегистрироваться</button>
+    </form>
+
+    <p class="auth-card__footer">
+      Уже есть аккаунт? <a href="/login">Войти</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

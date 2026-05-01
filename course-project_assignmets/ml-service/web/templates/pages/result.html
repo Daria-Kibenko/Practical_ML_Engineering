@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Результат предсказания — ML Service{% endblock %}
+
+{% block content %}
+<div class="result-wrap">
+  <div class="card result-card">
+    <div class="card__header">
+      <h2 class="card__title">Результат предсказания</h2>
+      <span class="badge badge--completed">completed</span>
+    </div>
+
+    <div class="result-meta">
+      <div class="result-meta__item">
+        <span class="label">Модель</span>
+        <strong>{{ result.result.model | default("—") }}</strong>
+      </div>
+      <div class="result-meta__item">
+        <span class="label">Алгоритм</span>
+        <strong>{{ result.result.algorithm | default("—") }}</strong>
+      </div>
+      <div class="result-meta__item">
+        <span class="label">Списано кредитов</span>
+        <strong>{{ result.credits_charged }}</strong>
+      </div>
+    </div>
+
+    <div class="result-prediction">
+      <span class="label">Предсказание</span>
+      <div class="prediction-value">{{ result.result.prediction }}</div>
+
+      {% if result.result.confidence is defined %}
+        <div class="confidence-bar">
+          <div class="confidence-bar__fill" style="width: {{ (result.result.confidence * 100) | int }}%"></div>
+        </div>
+        <p class="muted">Уверенность: {{ (result.result.confidence * 100) | round(1) }}%</p>
+      {% endif %}
+
+      {% if result.result.anomaly_score is defined %}
+        <p class="muted">Anomaly score: {{ result.result.anomaly_score }}</p>
+      {% endif %}
+    </div>
+
+    {# Ошибки валидации — какие поля были отклонены #}
+    {% if result.validation_errors %}
+      <div class="validation-errors">
+        <h4>⚠ Часть данных не прошла валидацию:</h4>
+        <ul>
+          {% for err in result.validation_errors %}
+            <li><code>{{ err.field }}</code>: {{ err.error }}</li>
+          {% endfor %}
+        </ul>
+        <p class="muted">Предсказание выполнено по валидным полям.</p>
+      </div>
+    {% endif %}
+
+    {# Поля, попавшие в модель #}
+    {% if result.result.features_received %}
+      <details class="details">
+        <summary>Признаки, использованные в предсказании</summary>
+        <ul class="feature-list">
+          {% for f in result.result.features_received %}
+            <li>{{ f }}</li>
+          {% endfor %}
+        </ul>
+      </details>
+    {% endif %}
+
+    <div class="result-actions">
+      <a href="/dashboard" class="btn btn--primary">← Новый запрос</a>
+      <a href="/history" class="btn btn--outline">История операций</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

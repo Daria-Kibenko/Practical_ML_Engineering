@@ -1,0 +1,21 @@
+<nav class="navbar">
+  <div class="container navbar__inner">
+    <a class="navbar__logo" href="/">⚡ ML Service</a>
+
+    <ul class="navbar__links">
+      <li><a href="/about">О сервисе</a></li>
+
+      {# Видно только гостям (JS скрывает когда is-auth) #}
+      <li class="guest-only"><a href="/login" class="btn btn--outline">Войти</a></li>
+      <li class="guest-only"><a href="/register" class="btn btn--primary">Регистрация</a></li>
+
+      {# Видно только авторизованным #}
+      <li class="auth-only"><a href="/dashboard">Кабинет</a></li>
+      <li class="auth-only"><a href="/history">История</a></li>
+      <li class="auth-only">
+        <span class="navbar__balance" id="nav-balance">— кред.</span>
+      </li>
+      <li class="auth-only"><a href="/logout" class="btn btn--outline">Выйти</a></li>
+    </ul>
+  </div>
+</nav>
