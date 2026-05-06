@@ -5,28 +5,29 @@
 from datetime import datetime, timedelta
 from typing import Optional
 
+import bcrypt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
 from ..config import settings
 from ..database import get_db
 from ..models.orm import UserORM
 
-# Конфигурация
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Конфигурация JWT
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
-# Работа с паролями
+# Работа с паролями (без passlib)
 def hash_password(plain: str) -> str:
-    return pwd_context.hash(plain)
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(plain.encode('utf-8'), salt)
+    return hashed.decode('utf-8')
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+    return bcrypt.checkpw(plain.encode('utf-8'), hashed.encode('utf-8'))
 
 
 # JWT
@@ -68,7 +69,7 @@ def get_current_user(
 def get_current_admin(
     current_user: UserORM = Depends(get_current_user),
 ) -> UserORM:
-    from src.models.domain import UserRole
+    from ..models.domain import UserRole
     if current_user.role != UserRole.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

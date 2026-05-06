@@ -11,7 +11,9 @@ from routers.dashboard import bp as dashboard_bp
 
 
 def create_app() -> Flask:
-    app = Flask(__name__)
+    app = Flask(__name__,
+                template_folder="templates",
+                static_folder="static")
     app.config.from_object(Config)
 
     app.register_blueprint(public_bp)

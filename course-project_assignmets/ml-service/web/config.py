@@ -4,6 +4,6 @@ import os
 
 
 class Config:
-    SECRET_KEY = os.getenv("FLASK_SECRET_KEY", "change_me_in_production")
-    API_BASE_URL = os.getenv("API_BASE_URL", "http://app:8000")
-    DEBUG = os.getenv("FLASK_DEBUG", "false").lower() == "true"
+    SECRET_KEY = os.getenv("SECRET_KEY", "dev-key")
+    DEBUG = os.getenv("DEBUG", "False").lower() == "true"
+    API_URL = os.getenv("API_URL", "http://localhost:8000")

@@ -1,10 +1,12 @@
-FROM nginx:1.27-alpine
+FROM nginx:alpine
 
+# Удаляем дефолтный конфиг
 RUN rm /etc/nginx/conf.d/default.conf
 
-COPY nginx.conf /etc/nginx/conf.d/app.conf
+# Копируем ваш готовый nginx.conf
+COPY web-proxy/nginx.conf /etc/nginx/conf.d/app.conf
 
-# Копируем фронтенд в директорию статики Nginx
-COPY ../frontend/index.html /usr/share/nginx/html/index.html
+# Никаких других COPY не нужно – весь контент раздаёт Flask
+EXPOSE 80
 
-EXPOSE 80 443
+CMD ["nginx", "-g", "daemon off;"]

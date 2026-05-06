@@ -1,8 +1,20 @@
-FROM python:3.12-slim
+# web/Dockerfile
+FROM python:3.9-slim
+
 WORKDIR /app
+
+# Копируем зависимости (если requirements.txt лежит в web/)
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Копируем всё содержимое web/ в /app
 COPY . .
-ENV PYTHONUNBUFFERED=1
+
+# Открываем порт Flask
 EXPOSE 5000
-CMD ["gunicorn", "main:create_app()", "--bind", "0.0.0.0:5000", "--workers", "2"]
+
+# Переменная окружения для Flask (если нужно)
+ENV FLASK_APP=main.py
+
+# Запускаем (точка входа – main.py)
+CMD ["python", "main.py"]

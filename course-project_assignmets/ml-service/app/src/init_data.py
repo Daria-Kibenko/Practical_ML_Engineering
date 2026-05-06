@@ -92,3 +92,4 @@ def _seed_models(db: Session) -> None:
         if not db.query(MLModelORM).filter(MLModelORM.name == data["name"]).first():
             db.add(MLModelORM(**data))
             logger.info("Создана ML-модель: %s", data["name"])
+

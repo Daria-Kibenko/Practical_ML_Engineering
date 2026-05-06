@@ -67,11 +67,11 @@ if _app_root not in sys.path:
 
 logger.debug("app root: %s", _app_root)
 
-# Импорты из пакета src (общий код с FastAPI-приложением)
-from src.models.domain import TaskStatus                                      # noqa: E402
-from src.models.orm import MLModelORM, MLTaskORM, PredictionResultORM         # noqa: E402
-from src.services.balance_service import BalanceService, InsufficientFundsError  # noqa: E402
-from src.services.ml_engine import run_prediction                              # noqa: E402
+# Импорты из пакета src
+from app.src.models.domain import TaskStatus
+from app.src.models.orm import MLModelORM, MLTaskORM, PredictionResultORM
+from app.src.services.balance_service import BalanceService, InsufficientFundsError
+from app.src.services.ml_engine import run_prediction
 
 # БД
 engine = create_engine(DB_URL, pool_pre_ping=True)

@@ -5,11 +5,16 @@
   GET      /logout    → сброс сессии
 """
 
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash
-import api_client as api
+import sys
+from pathlib import Path
+
+# Добавляем корневую папку проекта в путь поиска модулей
+sys.path.append(str(Path(__file__).parent.parent))
+
+from flask import Blueprint, render_template, request, redirect, url_for, session
+import api_client as api   # ← теперь абсолютный импорт
 
 bp = Blueprint("auth", __name__)
-
 
 @bp.route("/login", methods=["GET", "POST"])
 def login():

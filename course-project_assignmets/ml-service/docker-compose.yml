@@ -18,17 +18,39 @@ services:
     expose:
       - "8000"
     restart: unless-stopped
+    networks:
+      - backend
+
+  web:
+    build: ./web
+    container_name: ml-service-web
+    env_file:
+      - ./web/.env
+    environment:
+      - PYTHONPATH=/app
+    volumes:
+      - ./web:/app
+    expose:
+      - "5000"
+    restart: unless-stopped
+    depends_on:
+      - app
+    networks:
+      - backend
 
   web-proxy:
     build:
       context: .           # контекст — корень проекта, чтобы достать frontend/
       dockerfile: web-proxy/Dockerfile
     ports:
-      - "80:80"
+      - "8888:80"
       - "443:443"
     depends_on:
       - app
+      - web
     restart: unless-stopped
+    networks:
+      - backend
 
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
@@ -46,6 +68,8 @@ services:
       timeout: 5s
       retries: 5
     restart: on-failure
+    networks:
+      - backend
 
   database:
     image: postgres:16-alpine
@@ -61,14 +85,17 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
+    networks:
+      - backend
 
   worker:
     build:
       context: ./worker
       dockerfile: Dockerfile
     volumes:
-      - ./app/src:/app/src
+      - ./app:/app/app
     environment:
+      PYTHONPATH: /app
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
       RABBITMQ_USER: guest
@@ -87,6 +114,12 @@ services:
     deploy:
       replicas: 2
     restart: on-failure
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge
 
 volumes:
   postgres_data:

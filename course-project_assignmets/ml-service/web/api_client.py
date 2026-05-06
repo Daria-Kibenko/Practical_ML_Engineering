@@ -6,6 +6,9 @@
 import requests
 from flask import session
 from config import Config
+import os
+
+API_URL = os.getenv("API_URL", "http://app:8000")
 
 
 def _headers():
@@ -15,17 +18,31 @@ def _headers():
 
 
 def _url(path: str) -> str:
-    return Config.API_BASE_URL.rstrip("/") + path
+    return API_URL.rstrip("/") + path
 
 
-def register(email: str, password: str) -> dict:
-    r = requests.post(_url("/auth/register"), json={"email": email, "password": password})
-    return {"ok": r.status_code == 201, "data": r.json(), "status": r.status_code}
+def login(email, password):
+    # Бэкенд ожидает form-data с полями username и password
+    response = requests.post(
+        f"{API_URL}/auth/login",
+        data={"username": email, "password": password}
+    )
+    if response.status_code == 200:
+        return {"ok": True, "data": response.json()}
+    else:
+        return {"ok": False, "data": response.json(), "status": response.status_code}
 
 
-def login(email: str, password: str) -> dict:
-    r = requests.post(_url("/auth/login"), json={"email": email, "password": password})
-    return {"ok": r.status_code == 200, "data": r.json(), "status": r.status_code}
+def register(email, password):
+    # Регистрация ожидает JSON с полями email и password
+    response = requests.post(
+        f"{API_URL}/auth/register",
+        json={"email": email, "password": password}
+    )
+    if response.status_code == 201:
+        return {"ok": True, "data": response.json()}
+    else:
+        return {"ok": False, "data": response.json(), "status": response.status_code}
 
 
 def get_me() -> dict:
@@ -34,7 +51,7 @@ def get_me() -> dict:
 
 
 def get_balance() -> dict:
-    r = requests.get(_url("/balance/"), headers=_headers())
+    r = requests.get(_url("/balance"), headers=_headers())
     return {"ok": r.status_code == 200, "data": r.json()}
 
 

@@ -37,7 +37,7 @@ def test_init_db(_engine):
     Упрощённая init_db для тестов:
     создаёт таблицы в SQLite без ожидания PostgreSQL и без ML-обучения.
     """
-    from src.models.orm import Base
+    from app.src.models.orm import Base
     Base.metadata.create_all(bind=test_engine)
 
 
@@ -45,7 +45,7 @@ def test_init_db(_engine):
 @pytest.fixture(autouse=True)
 def clean_db():
     """Пересоздаёт схему БД перед каждым тестом."""
-    from src.models.orm import Base
+    from app.src.models.orm import Base
     Base.metadata.create_all(bind=test_engine)
     yield
     Base.metadata.drop_all(bind=test_engine)
@@ -59,10 +59,10 @@ def client():
       - заглушкой init_db (без ожидания PostgreSQL)
       - заглушкой RabbitMQ-паблишера
     """
-    import src.database as db_module
-    from src.main import app
-    from src.database import get_db
-    import src.services.rabbitmq_publisher as rmq
+    import app.src.database as db_module
+    from app.src.main import app
+    from app.src.database import get_db
+    import app.src.services.rabbitmq_publisher as rmq
 
     # Подменяем движок и сессию в модуле database
     original_engine = db_module.engine
@@ -80,7 +80,7 @@ def client():
 
     # Критично: роутер импортирует функцию напрямую через "from ... import",
     # поэтому патчим имя прямо в пространстве имён роутера
-    import src.routers.predict as predict_router
+    import app.src.routers.predict as predict_router
     predict_router.publish_ml_task = lambda task_id, model_name, features: published.append(task_id)
 
     # Патчим init_db чтобы не ждал PostgreSQL
@@ -131,7 +131,7 @@ def ml_model(client):
     """ML-модель стоимостью 5 кредитов, созданная напрямую в тестовой БД."""
     db = TestSessionLocal()
     try:
-        from src.models.orm import MLModelORM
+        from app.src.models.orm import MLModelORM
         model = MLModelORM(
             name="Classifier v1",
             description="Test classifier",
